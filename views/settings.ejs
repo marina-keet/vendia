@@ -1,0 +1,447 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">
+      <i class="fas fa-cog text-blue-600 mr-2"></i>Paramètres
+    </h1>
+    <button onclick="saveSettings()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+      <i class="fas fa-save mr-2"></i>Enregistrer
+    </button>
+  </div>
+
+  <!-- Onglets -->
+  <div class="bg-white rounded-lg shadow-md mb-6">
+    <div class="border-b border-gray-200">
+      <nav class="flex -mb-px">
+        <button onclick="showTab('business')" class="tab-btn active px-6 py-4 border-b-2 font-medium text-sm" data-tab="business">
+          <i class="fas fa-building mr-2"></i>Entreprise
+        </button>
+        <button onclick="showTab('general')" class="tab-btn px-6 py-4 border-b-2 font-medium text-sm" data-tab="general">
+          <i class="fas fa-sliders-h mr-2"></i>Général
+        </button>
+        <button onclick="showTab('inventory')" class="tab-btn px-6 py-4 border-b-2 font-medium text-sm" data-tab="inventory">
+          <i class="fas fa-boxes mr-2"></i>Inventaire
+        </button>
+        <button onclick="showTab('receipt')" class="tab-btn px-6 py-4 border-b-2 font-medium text-sm" data-tab="receipt">
+          <i class="fas fa-receipt mr-2"></i>Reçus
+        </button>
+        <button onclick="showTab('loyalty')" class="tab-btn px-6 py-4 border-b-2 font-medium text-sm" data-tab="loyalty">
+          <i class="fas fa-star mr-2"></i>Fidélité
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Contenu des onglets -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <!-- Onglet Entreprise -->
+    <div id="tab-business" class="tab-content">
+      <h2 class="text-xl font-bold mb-6">Informations de l'Entreprise</h2>
+      <div class="space-y-6">
+        <!-- Section Logo -->
+        <div class="border-b pb-6 mb-6">
+          <h3 class="text-lg font-semibold mb-4">
+            <i class="fas fa-image text-blue-600 mr-2"></i>Logo de l'entreprise
+          </h3>
+          <div class="flex items-start gap-6">
+            <div id="logoPreview" class="border-2 border-dashed border-gray-300 rounded-lg p-4 w-48 h-48 flex items-center justify-center bg-gray-50">
+              <i class="fas fa-image text-gray-400 text-5xl"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm text-gray-600 mb-4">
+                Le logo apparaîtra sur les reçus et factures. Formats acceptés : JPG, PNG, GIF, SVG (max 5MB)
+              </p>
+              <div class="flex gap-2">
+                <label for="logoFile" class="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition inline-flex items-center">
+                  <i class="fas fa-upload mr-2"></i>Choisir un logo
+                  <input type="file" id="logoFile" accept="image/*" class="hidden" onchange="uploadLogo()">
+                </label>
+                <button onclick="deleteLogo()" id="deleteLogoBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition hidden">
+                  <i class="fas fa-trash mr-2"></i>Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Informations -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nom de l'entreprise</label>
+          <input type="text" id="business_name" class="w-full border rounded-lg px-4 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+          <textarea id="business_address" rows="3" class="w-full border rounded-lg px-4 py-2"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+            <input type="tel" id="business_phone" class="w-full border rounded-lg px-4 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input type="email" id="business_email" class="w-full border rounded-lg px-4 py-2">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Numéro d'identification fiscale</label>
+          <input type="text" id="business_tax_id" class="w-full border rounded-lg px-4 py-2">
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Général -->
+    <div id="tab-general" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-6">Paramètres Généraux</h2>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Devise</label>
+            <select id="currency" class="w-full border rounded-lg px-4 py-2">
+              <option value="FCFA">FCFA</option>
+              <option value="EUR">Euro (€)</option>
+              <option value="USD">Dollar ($)</option>
+              <option value="GBP">Livre (£)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Position devise</label>
+            <select id="currency_position" class="w-full border rounded-lg px-4 py-2">
+              <option value="after">Après le montant (1000 FCFA)</option>
+              <option value="before">Avant le montant (FCFA 1000)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Taux de TVA (%)</label>
+            <input type="number" id="tax_rate" min="0" max="100" step="0.1" class="w-full border rounded-lg px-4 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">TVA incluse</label>
+            <select id="tax_included" class="w-full border rounded-lg px-4 py-2">
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fuseau horaire</label>
+          <select id="timezone" class="w-full border rounded-lg px-4 py-2">
+            <option value="Africa/Abidjan">Africa/Abidjan (GMT)</option>
+            <option value="Africa/Dakar">Africa/Dakar (GMT)</option>
+            <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+            <option value="Europe/Paris">Europe/Paris (CET)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Inventaire -->
+    <div id="tab-inventory" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-6">Gestion du Stock</h2>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Seuil d'alerte stock bas</label>
+            <input type="number" id="low_stock_threshold" min="0" class="w-full border rounded-lg px-4 py-2">
+            <p class="text-xs text-gray-500 mt-1">Alerte si quantité ≤ ce seuil</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Seuil stock critique</label>
+            <input type="number" id="critical_stock_threshold" min="0" class="w-full border rounded-lg px-4 py-2">
+            <p class="text-xs text-gray-500 mt-1">Alerte rouge si quantité ≤ ce seuil</p>
+          </div>
+        </div>
+        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="auto_restock_alerts" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Activer les alertes automatiques de réapprovisionnement</span>
+          </label>
+        </div>
+        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="allow_negative_stock" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Autoriser les ventes en rupture de stock</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Reçus -->
+    <div id="tab-receipt" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-6">Personnalisation des Reçus</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_logo" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher le logo sur les reçus</span>
+          </label>
+        </div>
+        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_tax" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher le détail de la TVA</span>
+          </label>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Message de pied de page</label>
+          <textarea id="receipt_footer" rows="3" class="w-full border rounded-lg px-4 py-2" 
+                    placeholder="Ex: Merci de votre visite ! À bientôt"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Taille du papier</label>
+          <select id="receipt_paper_size" class="w-full border rounded-lg px-4 py-2">
+            <option value="80mm">80mm (Standard)</option>
+            <option value="58mm">58mm (Petit)</option>
+            <option value="A4">A4</option>
+          </select>
+        </div>
+        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_auto_print" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Impression automatique après chaque vente</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Fidélité -->
+    <div id="tab-loyalty" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-6">Programme de Fidélité</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="loyalty_enabled" class="h-5 w-5 text-blue-600" onchange="toggleLoyaltySettings()">
+            <span class="text-sm font-medium text-gray-700">Activer le programme de fidélité</span>
+          </label>
+        </div>
+        <div id="loyaltySettings" class="space-y-4 pl-8">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Points par FCFA dépensé</label>
+              <input type="number" id="loyalty_points_per_currency" min="0" step="0.01" class="w-full border rounded-lg px-4 py-2">
+              <p class="text-xs text-gray-500 mt-1">Ex: 0.1 = 1 point pour 10 FCFA</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Valeur d'un point (FCFA)</label>
+              <input type="number" id="loyalty_point_value" min="0" step="0.1" class="w-full border rounded-lg px-4 py-2">
+              <p class="text-xs text-gray-500 mt-1">Ex: 5 = 1 point = 5 FCFA</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Points minimum pour remise</label>
+            <input type="number" id="loyalty_min_points" min="0" class="w-full border rounded-lg px-4 py-2">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let settings = {};
+  let currentLogo = null;
+
+  async function loadSettings() {
+    const response = await apiRequest('/api/settings');
+    settings = await response.json();
+    
+    // Remplir les champs
+    settings.forEach(s => {
+      const field = document.getElementById(s.key);
+      if (field) {
+        if (field.type === 'checkbox') {
+          field.checked = s.value === 'true' || s.value === true;
+        } else {
+          field.value = s.value;
+        }
+      }
+
+      // Charger le logo si disponible
+      if (s.key === 'logo' && s.value) {
+        currentLogo = s.value;
+        displayLogo(s.value);
+      }
+    });
+
+    toggleLoyaltySettings();
+  }
+
+  function displayLogo(logoUrl) {
+    const preview = document.getElementById('logoPreview');
+    preview.innerHTML = `<img src="${logoUrl}" alt="Logo" class="max-w-full max-h-full object-contain">`;
+    document.getElementById('deleteLogoBtn').classList.remove('hidden');
+  }
+
+  async function uploadLogo() {
+    const fileInput = document.getElementById('logoFile');
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    // Vérifier la taille (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Le fichier est trop volumineux. Taille maximum : 5MB');
+      return;
+    }
+
+    // Vérifier le type
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner une image valide');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    try {
+      const response = await apiRequest('/api/settings/upload-logo', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        displayLogo(data.logoUrl);
+        alert('Logo uploadé avec succès!');
+      } else {
+        const error = await response.json();
+        alert('Erreur: ' + error.error);
+      }
+    } catch (error) {
+      alert('Erreur lors de l\'upload: ' + error.message);
+    }
+  }
+
+  async function deleteLogo() {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer le logo ?')) return;
+
+    try {
+      const response = await apiRequest('/api/settings/logo', {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        const preview = document.getElementById('logoPreview');
+        preview.innerHTML = '<i class="fas fa-image text-gray-400 text-5xl"></i>';
+        document.getElementById('deleteLogoBtn').classList.add('hidden');
+        currentLogo = null;
+        alert('Logo supprimé avec succès!');
+      } else {
+        const error = await response.json();
+        alert('Erreur: ' + error.error);
+      }
+    } catch (error) {
+      alert('Erreur lors de la suppression: ' + error.message);
+    }
+  }
+
+  function showTab(tabName) {
+    // Masquer tous les contenus
+    document.querySelectorAll('.tab-content').forEach(tab => {
+      tab.classList.add('hidden');
+    });
+    
+    // Désactiver tous les boutons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+      btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Afficher le contenu sélectionné
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    
+    // Activer le bouton sélectionné
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    activeBtn.classList.add('active', 'border-blue-500', 'text-blue-600');
+    activeBtn.classList.remove('border-transparent', 'text-gray-500');
+  }
+
+  function toggleLoyaltySettings() {
+    const enabled = document.getElementById('loyalty_enabled').checked;
+    const settingsDiv = document.getElementById('loyaltySettings');
+    
+    if (enabled) {
+      settingsDiv.classList.remove('opacity-50', 'pointer-events-none');
+    } else {
+      settingsDiv.classList.add('opacity-50', 'pointer-events-none');
+    }
+  }
+
+  async function saveSettings() {
+    const settingsToSave = [
+      // Business
+      { key: 'business_name', value: document.getElementById('business_name').value },
+      { key: 'business_address', value: document.getElementById('business_address').value },
+      { key: 'business_phone', value: document.getElementById('business_phone').value },
+      { key: 'business_email', value: document.getElementById('business_email').value },
+      { key: 'business_tax_id', value: document.getElementById('business_tax_id').value },
+      
+      // General
+      { key: 'currency', value: document.getElementById('currency').value },
+      { key: 'currency_position', value: document.getElementById('currency_position').value },
+      { key: 'tax_rate', value: document.getElementById('tax_rate').value },
+      { key: 'tax_included', value: document.getElementById('tax_included').value },
+      { key: 'timezone', value: document.getElementById('timezone').value },
+      
+      // Inventory
+      { key: 'low_stock_threshold', value: document.getElementById('low_stock_threshold').value },
+      { key: 'critical_stock_threshold', value: document.getElementById('critical_stock_threshold').value },
+      { key: 'auto_restock_alerts', value: document.getElementById('auto_restock_alerts').checked.toString() },
+      { key: 'allow_negative_stock', value: document.getElementById('allow_negative_stock').checked.toString() },
+      
+      // Receipt
+      { key: 'receipt_show_logo', value: document.getElementById('receipt_show_logo').checked.toString() },
+      { key: 'receipt_show_tax', value: document.getElementById('receipt_show_tax').checked.toString() },
+      { key: 'receipt_footer', value: document.getElementById('receipt_footer').value },
+      { key: 'receipt_paper_size', value: document.getElementById('receipt_paper_size').value },
+      { key: 'receipt_auto_print', value: document.getElementById('receipt_auto_print').checked.toString() },
+      
+      // Loyalty
+      { key: 'loyalty_enabled', value: document.getElementById('loyalty_enabled').checked.toString() },
+      { key: 'loyalty_points_per_currency', value: document.getElementById('loyalty_points_per_currency').value },
+      { key: 'loyalty_point_value', value: document.getElementById('loyalty_point_value').value },
+      { key: 'loyalty_min_points', value: document.getElementById('loyalty_min_points').value }
+    ];
+
+    try {
+      const response = await apiRequest('/api/settings/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: settingsToSave })
+      });
+
+      if (response.ok) {
+        alert('Paramètres enregistrés avec succès!');
+        loadSettings(); // Recharger pour confirmer
+      } else {
+        const error = await response.json();
+        alert('Erreur: ' + error.message);
+      }
+    } catch (error) {
+      alert('Erreur lors de l\'enregistrement: ' + error.message);
+    }
+  }
+
+  // Initialisation
+  loadSettings();
+</script>
+
+<style>
+  .tab-btn.active {
+    border-color: #2563eb;
+    color: #2563eb;
+  }
+  .tab-btn:not(.active) {
+    border-color: transparent;
+    color: #6b7280;
+  }
+  .tab-btn:hover:not(.active) {
+    color: #374151;
+    border-color: #d1d5db;
+  }
+</style>
+
+<%- include('partials/footer') %>

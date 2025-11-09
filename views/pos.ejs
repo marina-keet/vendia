@@ -1,0 +1,1168 @@
+<%- include('partials/header') %>
+
+<style>
+  .currency-btn {
+    background-color: transparent;
+    color: #6b7280;
+  }
+  .currency-active {
+    background-color: #3b82f6;
+    color: white;
+  }
+  .currency-btn:hover:not(.currency-active) {
+    background-color: #e5e7eb;
+  }
+  
+  /* Styles pour les cartes produits modernes */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Animation smooth pour le hover */
+  #productsGrid > div {
+    transform-origin: center;
+  }
+  
+  /* Animation pour le changement de stock */
+  @keyframes stockUpdate {
+    0% { background-color: #fef3c7; transform: scale(1.05); }
+    50% { background-color: #fde68a; }
+    100% { background-color: transparent; transform: scale(1); }
+  }
+  
+  .stock-updated {
+    animation: stockUpdate 1.5s ease-in-out;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .stock-pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  /* Scrollbar personnalisée */
+  #productsGrid::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  #productsGrid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  #productsGrid::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  #productsGrid::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+</style>
+
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">
+    <i class="fas fa-cash-register text-blue-600 mr-2"></i>Point de Vente
+  </h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Produits disponibles -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="mb-4">
+          <div class="relative">
+            <input type="text" id="productSearch" placeholder="🔍 Rechercher ou scanner un produit..." 
+              oninput="filterProducts()"
+              class="w-full border-2 border-gray-300 rounded-xl px-5 py-4 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+            <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
+              <i class="fas fa-search text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+
+        <div id="productsGrid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[600px] overflow-y-auto pr-2">
+          <div class="text-center text-gray-500 col-span-full py-8">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+            <p>Chargement des produits...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panier -->
+    <div class="lg:col-span-1">
+      <div class="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg p-5 sticky top-4 border-2 border-blue-100">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-blue-200">
+          <div>
+            <h2 class="text-xl font-bold text-gray-800 flex items-center">
+              <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>
+              Panier
+            </h2>
+            <span id="cartCount" class="text-xs text-gray-500 font-medium">(0 article)</span>
+          </div>
+          <button onclick="clearCart()" class="text-sm text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition font-semibold">
+            <i class="fas fa-trash mr-1"></i>Vider
+          </button>
+        </div>
+
+        <!-- Sélecteur de devise -->
+        <div class="mb-4 flex items-center justify-center space-x-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-1 shadow-inner">
+          <button onclick="setCurrency('FC')" id="btnFC" 
+            class="flex-1 py-2 px-4 rounded-lg font-bold transition currency-btn currency-active">
+            FC
+          </button>
+          <button onclick="setCurrency('USD')" id="btnUSD" 
+            class="flex-1 py-2 px-4 rounded-lg font-bold transition currency-btn">
+            USD
+          </button>
+        </div>
+
+        <div id="cartItems" class="space-y-0 mb-4 max-h-96 overflow-y-auto rounded-lg">
+          <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-shopping-cart text-5xl mb-3"></i>
+            <p class="text-sm">Panier vide</p>
+          </div>
+        </div>
+
+        <div class="border-t-2 border-blue-200 pt-4 space-y-2 bg-white rounded-lg p-3 shadow-inner">
+          <div class="flex justify-between text-base">
+            <span class="text-gray-600">Sous-total:</span>
+            <span id="subtotal" class="font-bold text-gray-800">0 FC</span>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <span>Remise:</span>
+            <input type="number" id="discount" value="0" min="0" 
+              class="w-24 border rounded px-2 py-1 text-right"
+              onchange="updateTotal()">
+          </div>
+
+          <div class="flex justify-between text-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-3 shadow-lg mt-3">
+            <span>TOTAL:</span>
+            <span id="total">0 FC</span>
+          </div>
+          
+          <!-- Affichage devise secondaire -->
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>Équivalent:</span>
+            <span id="totalSecondary">0 $</span>
+          </div>
+
+          <!-- Argent reçu et monnaie à rendre -->
+          <div class="mt-4 space-y-3 bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200">
+            <div class="flex justify-between items-center">
+              <label class="font-bold text-gray-700">
+                <i class="fas fa-money-bill-wave text-green-600 mr-2"></i>Argent reçu:
+              </label>
+              <input type="number" id="cashReceived" value="0" min="0" step="0.01"
+                class="w-32 border-2 border-green-300 rounded-lg px-3 py-2 text-right font-bold text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                oninput="calculateChange()"
+                placeholder="0">
+            </div>
+
+            <div id="changeDisplay" class="hidden">
+              <div class="flex justify-between text-lg font-bold p-3 rounded-lg" id="changeContainer">
+                <span>
+                  <i class="fas fa-hand-holding-usd mr-2"></i>Monnaie à rendre:
+                </span>
+                <span id="changeAmount">0 FC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-user mr-1 text-blue-600"></i>Client (optionnel)
+            </label>
+            <select id="customerId" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+              <option value="">-- Vente sans client --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-credit-card mr-1 text-blue-600"></i>Méthode de paiement
+            </label>
+            <select id="paymentMethod" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+              <option value="cash">💵 Espèces</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="completeSale()" 
+          class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl mt-6 hover:from-green-700 hover:to-green-800 transition text-lg font-bold shadow-lg transform hover:scale-105">
+          <i class="fas fa-check-circle mr-2"></i>Valider la vente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation avec aperçu du reçu -->
+<div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <!-- En-tête -->
+    <div class="bg-green-600 text-white p-6 text-center">
+      <div class="text-6xl mb-4">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2 class="text-2xl font-bold">Vente réussie!</h2>
+      <p class="text-green-100">La vente a été enregistrée avec succès.</p>
+    </div>
+    
+    <!-- Aperçu du reçu -->
+    <div id="receiptPreview" class="p-6">
+      <div class="text-center text-gray-500">
+        <i class="fas fa-spinner fa-spin text-2xl"></i>
+        <p class="mt-2">Chargement du reçu...</p>
+      </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="p-6 border-t space-y-3">
+      <button onclick="printReceipt()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold">
+        <i class="fas fa-print mr-2"></i>Imprimer le reçu
+      </button>
+      <button onclick="downloadReceipt()" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-semibold">
+        <i class="fas fa-download mr-2"></i>Télécharger PDF
+      </button>
+      <button onclick="closeSuccessModal()" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 font-semibold">
+        <i class="fas fa-plus mr-2"></i>Nouvelle vente
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let products = [];
+  let previousStocks = {}; // Suivre les anciens stocks
+  let cart = [];
+  let lastSaleId = null;
+  let customers = [];
+  let currentCurrency = 'FC'; // Devise actuelle
+  let exchangeRate = 2500; // Taux de change par défaut
+  let currencySettings = null;
+
+  // Charger les paramètres de devise
+  async function loadCurrencySettings() {
+    try {
+      const response = await fetch('/api/settings/currency/info');
+      currencySettings = await response.json();
+      currentCurrency = currencySettings.primaryCurrency;
+      exchangeRate = currencySettings.exchangeRate;
+      
+      // Activer le bouton de la devise par défaut
+      setCurrency(currentCurrency);
+    } catch (error) {
+      console.error('Erreur chargement devises:', error);
+    }
+  }
+
+  // Changer de devise
+  function setCurrency(currency) {
+    currentCurrency = currency;
+    
+    // Mettre à jour les boutons
+    document.querySelectorAll('.currency-btn').forEach(btn => {
+      btn.classList.remove('currency-active');
+    });
+    document.getElementById(`btn${currency}`).classList.add('currency-active');
+    
+    // Rafraîchir l'affichage
+    displayProducts(products);
+    displayCart();
+    updateTotal();
+  }
+
+  // Formater un montant avec la devise
+  function formatCurrency(amount, currency = currentCurrency) {
+    const formatted = new Intl.NumberFormat('fr-CD', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(amount);
+    
+    return currency === 'FC' ? `${formatted} FC` : `${formatted} $`;
+  }
+
+  // Convertir un montant
+  function convertAmount(amount, from, to) {
+    if (from === to) return amount;
+    if (from === 'FC' && to === 'USD') return amount / exchangeRate;
+    if (from === 'USD' && to === 'FC') return amount * exchangeRate;
+    return amount;
+  }
+
+  // Charger les produits et clients
+  async function loadProducts() {
+    try {
+      console.log('🔄 Chargement des produits POS...');
+      const response = await fetch('/api/products/pos-list');
+      const data = await response.json();
+      console.log('📦 Données reçues:', data);
+      
+      // Sauvegarder les anciens stocks avant de mettre à jour
+      const oldStocks = {};
+      products.forEach(p => {
+        oldStocks[p._id || p.id] = p.stock;
+      });
+      
+      // Filtrer pour ne garder que les produits en stock
+      products = (data.products || []).filter(p => p.stock > 0);
+      console.log('✅ Produits en stock:', products.length);
+      
+      // Détecter les changements de stock
+      products.forEach(p => {
+        const productId = p._id || p.id;
+        const oldStock = oldStocks[productId];
+        if (oldStock !== undefined && oldStock !== p.stock) {
+          previousStocks[productId] = {
+            old: oldStock,
+            new: p.stock,
+            changed: true
+          };
+          console.log(`📉 Stock mis à jour pour ${p.name}: ${oldStock} → ${p.stock}`);
+        }
+      });
+      
+      displayProducts(); // Afficher sans filtre
+    } catch (error) {
+      console.error('❌ Erreur chargement produits:', error);
+      document.getElementById('productsGrid').innerHTML = '<p class="text-red-500 text-center col-span-full py-8">Erreur de chargement des produits. Veuillez rafraîchir la page.</p>';
+    }
+  }
+
+  async function loadCustomers() {
+    try {
+      const response = await apiRequest('/api/customers');
+      customers = await response.json();
+      
+      const select = document.getElementById('customerId');
+      customers.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.textContent = `${c.name} - ${c.phone}`;
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Erreur chargement clients:', error);
+    }
+  }
+
+  // Filtrer les produits lors de la recherche
+  function filterProducts() {
+    const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+    displayProducts(searchTerm);
+  }
+
+  // Afficher les produits avec filtre optionnel
+  function displayProducts(filter = '') {
+    const grid = document.getElementById('productsGrid');
+    let productList = products;
+    
+    if (filter) {
+      productList = products.filter(p => 
+        p.name.toLowerCase().includes(filter) || 
+        p.barcode?.toLowerCase().includes(filter)
+      );
+      
+      // Si recherche et aucun résultat
+      if (productList.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <div class="bg-red-50 border-2 border-red-300 rounded-xl p-8 inline-block">
+              <i class="fas fa-box-open text-6xl text-red-400 mb-4"></i>
+              <h3 class="text-xl font-bold text-red-800 mb-2">Produit non disponible</h3>
+              <p class="text-red-600 mb-3">Le produit recherché est en <strong>rupture de stock</strong></p>
+              <p class="text-sm text-red-500">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                Veuillez <strong>réapprovisionner</strong> ou contacter le fournisseur
+              </p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+    }
+    
+    if (productList.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full text-center py-12">
+          <div class="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-8 inline-block">
+            <i class="fas fa-exclamation-circle text-6xl text-yellow-500 mb-4"></i>
+            <h3 class="text-xl font-bold text-yellow-800 mb-2">Aucun produit disponible</h3>
+            <p class="text-yellow-600">Tous les produits sont en rupture de stock</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    grid.innerHTML = productList.map(p => {
+      // Prix par défaut en FC, convertir si nécessaire
+      const priceInCurrentCurrency = currentCurrency === 'USD' 
+        ? convertAmount(p.price, 'FC', 'USD')
+        : p.price;
+      
+      const productId = p._id || p.id;
+      
+      // Déterminer la couleur de fond selon le stock
+      let stockBgClass = 'bg-green-50 border-green-200';
+      let stockTextClass = 'text-green-700';
+      let stockIcon = 'fa-check-circle';
+      let stockStatus = 'En stock';
+      
+      if (p.stock === 0) {
+        stockBgClass = 'bg-red-50 border-red-300';
+        stockTextClass = 'text-red-700';
+        stockIcon = 'fa-times-circle';
+        stockStatus = 'Rupture';
+      } else if (p.stock <= 10) {
+        stockBgClass = 'bg-yellow-50 border-yellow-300';
+        stockTextClass = 'text-yellow-700';
+        stockIcon = 'fa-exclamation-triangle';
+        stockStatus = 'Stock faible';
+      }
+      
+      // Vérifier si le stock a changé
+      const stockChange = previousStocks[productId];
+      let stockChangeHtml = '';
+      let cardAnimation = '';
+      
+      if (stockChange && stockChange.changed) {
+        const diff = stockChange.new - stockChange.old;
+        if (diff < 0) {
+          stockChangeHtml = `
+            <div class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold animate-bounce">
+              ${diff} <i class="fas fa-arrow-down"></i>
+            </div>
+          `;
+          cardAnimation = 'stock-updated';
+        }
+        // Nettoyer après l'affichage
+        setTimeout(() => {
+          delete previousStocks[productId];
+        }, 3000);
+      }
+      
+      return `
+      <div onclick="addToCart('${productId}')" 
+        class="relative border-2 ${stockBgClass} rounded-lg p-2 hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-200 ${p.stock === 0 ? 'opacity-60' : ''} ${cardAnimation}">
+        
+        ${stockChangeHtml}
+        
+        <!-- Badge Prix -->
+        <div class="absolute top-1 right-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-md">
+          ${formatCurrency(priceInCurrentCurrency)}
+        </div>
+        
+        <!-- Icône Produit -->
+        <div class="text-center mb-2">
+          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl w-12 h-12 flex items-center justify-center mx-auto mb-2 shadow-md">
+            <i class="fas fa-box-open text-xl text-white"></i>
+          </div>
+          
+          <!-- Nom du produit -->
+          <h3 class="font-bold text-gray-800 text-xs mb-1 line-clamp-2 min-h-[2rem]">${p.name}</h3>
+          
+          <!-- Catégorie si disponible -->
+          ${p.category ? `<div class="text-[10px] text-gray-500 mb-1"><i class="fas fa-tag mr-1"></i>${p.category}</div>` : ''}
+          
+          <!-- Badge Stock avec animation si changement -->
+          <div class="flex items-center justify-center space-x-1 ${stockTextClass} text-[10px] font-medium ${stockChange && stockChange.changed ? 'stock-pulse' : ''}">
+            <i class="fas ${stockIcon} text-xs"></i>
+            <span>${stockStatus}: <strong class="text-sm">${p.stock}</strong></span>
+          </div>
+          ${stockChange && stockChange.changed ? `
+            <div class="text-[9px] text-gray-500 mt-0.5">
+              (était: ${stockChange.old})
+            </div>
+          ` : ''}
+        </div>
+        
+        <!-- Bouton Ajouter -->
+        <div class="mt-2 pt-2 border-t ${p.stock === 0 ? 'border-red-200' : 'border-gray-200'}">
+          <div class="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-1.5 rounded-md text-xs font-bold hover:from-green-600 hover:to-green-700 transition shadow-md">
+            <i class="fas fa-plus-circle mr-1"></i>Ajouter
+          </div>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  // Ajouter au panier
+  function addToCart(productId) {
+    const product = products.find(p => (p._id || p.id) === productId);
+    
+    if (!product || product.stock === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Produit indisponible',
+        html: `
+          <p class="text-red-600 mb-2">Ce produit est en <strong>rupture de stock</strong></p>
+          <p class="text-sm text-gray-600">Veuillez réapprovisionner pour continuer la vente</p>
+        `,
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+    
+    const cartItem = cart.find(item => item.productId === productId);
+    
+    if (cartItem) {
+      if (cartItem.quantity < product.stock) {
+        cartItem.quantity++;
+      } else {
+        alert('Stock insuffisant');
+        return;
+      }
+    } else {
+      cart.push({
+        productId: product._id || product.id,
+        productName: product.name,
+        unitPrice: product.price,
+        quantity: 1
+      });
+    }
+    
+    displayCart();
+    updateTotal();
+  }
+
+  // Afficher le panier
+  function displayCart() {
+    const container = document.getElementById('cartItems');
+    const countElement = document.getElementById('cartCount');
+    
+    // Mettre à jour le compteur
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    countElement.textContent = `(${totalItems} article${totalItems > 1 ? 's' : ''})`;
+    
+    if (cart.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-8 text-gray-400">
+          <i class="fas fa-shopping-cart text-5xl mb-3"></i>
+          <p class="text-sm">Panier vide</p>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = cart.map((item, index) => {
+      const priceInCurrentCurrency = currentCurrency === 'USD' 
+        ? convertAmount(item.unitPrice, 'FC', 'USD')
+        : item.unitPrice;
+      
+      const subtotal = priceInCurrentCurrency * item.quantity;
+      
+      return `
+      <div class="bg-gradient-to-br from-white to-gray-50 p-3 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition mb-2">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex-1">
+            <div class="font-bold text-gray-800 text-sm">${item.productName}</div>
+            <div class="text-xs text-gray-500 mt-0.5">${formatCurrency(priceInCurrentCurrency)} / unité</div>
+          </div>
+          <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-1">
+            <i class="fas fa-trash text-sm"></i>
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-200">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-gray-600 font-medium">Qté:</span>
+            <input 
+              type="number" 
+              value="${item.quantity}" 
+              min="1" 
+              max="999"
+              onchange="setQuantity(${index}, this.value)"
+              onclick="event.stopPropagation()"
+              class="w-16 px-2 py-1 text-center border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-sm"
+            >
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-500">Total</div>
+            <div class="font-bold text-blue-600">${formatCurrency(subtotal)}</div>
+          </div>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  // Définir la quantité directement
+  function setQuantity(index, value) {
+    const item = cart[index];
+    const product = products.find(p => (p._id || p.id) === item.productId);
+    
+    const newQuantity = parseInt(value) || 1;
+    
+    if (newQuantity <= 0) {
+      removeFromCart(index);
+    } else if (product && newQuantity <= product.stock) {
+      item.quantity = newQuantity;
+      displayCart();
+      updateTotal();
+    } else {
+      alert(`Stock insuffisant. Maximum disponible: ${product.stock}`);
+      displayCart(); // Réafficher avec l'ancienne valeur
+    }
+  }
+
+  // Mettre à jour la quantité (pour compatibilité)
+  function updateQuantity(index, change) {
+    const item = cart[index];
+    setQuantity(index, item.quantity + change);
+  }
+
+  // Retirer du panier
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    displayCart();
+    updateTotal();
+  }
+
+  // Vider le panier
+  function clearCart() {
+    if (cart.length > 0 && confirm('Vider le panier?')) {
+      cart = [];
+      document.getElementById('cashReceived').value = 0;
+      displayCart();
+      updateTotal();
+    }
+  }
+
+  // Mettre à jour le total
+  function updateTotal() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const total = Math.max(0, subtotal - discount);
+    
+    // Affichage dans la devise actuelle
+    const subtotalInCurrentCurrency = currentCurrency === 'USD' 
+      ? convertAmount(subtotal, 'FC', 'USD')
+      : subtotal;
+    const totalInCurrentCurrency = currentCurrency === 'USD' 
+      ? convertAmount(total, 'FC', 'USD')
+      : total;
+    
+    // Affichage dans la devise secondaire
+    const secondaryCurrency = currentCurrency === 'FC' ? 'USD' : 'FC';
+    const totalInSecondary = convertAmount(total, 'FC', secondaryCurrency);
+    
+    document.getElementById('subtotal').textContent = formatCurrency(subtotalInCurrentCurrency);
+    document.getElementById('total').textContent = formatCurrency(totalInCurrentCurrency);
+    document.getElementById('totalSecondary').textContent = formatCurrency(totalInSecondary, secondaryCurrency);
+    
+    // Recalculer la monnaie après mise à jour du total
+    calculateChange();
+  }
+
+  // Calculer la monnaie à rendre
+  function calculateChange() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const total = Math.max(0, subtotal - discount);
+    
+    // Convertir le total dans la devise actuelle
+    const totalInCurrentCurrency = currentCurrency === 'USD' 
+      ? convertAmount(total, 'FC', 'USD')
+      : total;
+    
+    const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+    const change = cashReceived - totalInCurrentCurrency;
+    
+    const changeDisplay = document.getElementById('changeDisplay');
+    const changeContainer = document.getElementById('changeContainer');
+    const changeAmount = document.getElementById('changeAmount');
+    
+    if (cashReceived > 0 && total > 0) {
+      changeDisplay.classList.remove('hidden');
+      
+      if (change >= 0) {
+        // Monnaie positive - à rendre au client
+        changeContainer.className = 'flex justify-between text-lg font-bold p-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg';
+        changeContainer.innerHTML = `
+          <span>
+            <i class="fas fa-hand-holding-usd mr-2"></i>Monnaie à rendre:
+          </span>
+          <span>${formatCurrency(change)}</span>
+        `;
+      } else {
+        // Argent insuffisant
+        changeContainer.className = 'flex justify-between text-lg font-bold p-3 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg';
+        changeContainer.innerHTML = `
+          <span>
+            <i class="fas fa-exclamation-triangle mr-2"></i>Manquant:
+          </span>
+          <span>${formatCurrency(Math.abs(change))}</span>
+        `;
+      }
+    } else {
+      changeDisplay.classList.add('hidden');
+    }
+  }
+
+  // Finaliser la vente
+  async function completeSale() {
+    if (cart.length === 0) {
+      alert('Le panier est vide');
+      return;
+    }
+    
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const customerId = document.getElementById('customerId').value || null;
+    
+    // Récupérer le nom du client
+    let customerName = 'Client anonyme';
+    if (customerId) {
+      const selectedOption = document.getElementById('customerId').selectedOptions[0];
+      customerName = selectedOption ? selectedOption.textContent : 'Client anonyme';
+    }
+    
+    const saleData = {
+      items: cart,
+      paymentMethod: paymentMethod,
+      discount: discount,
+      customerId: customerId ? parseInt(customerId) : null,
+      customerName: customerName
+    };
+    
+    try {
+      const response = await apiRequest('/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saleData)
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        lastSaleId = result.saleId;
+        document.getElementById('successModal').classList.remove('hidden');
+        loadReceiptPreview(result.saleId);
+        cart = [];
+        document.getElementById('discount').value = 0;
+        document.getElementById('customerId').value = '';
+        displayCart();
+        updateTotal();
+        loadProducts(); // Rafraîchir les stocks
+      } else {
+        alert('Erreur: ' + result.error);
+      }
+    } catch (error) {
+      alert('Erreur lors de l\'enregistrement de la vente');
+    }
+  }
+
+  // Charger l'aperçu du reçu
+  async function loadReceiptPreview(saleId) {
+    try {
+      const response = await apiRequest(`/api/sales/${saleId}`);
+      const data = await response.json();
+      const sale = data.sale;
+      const items = data.items;
+      const customerName = data.customerName || 'Client anonyme';
+      const cashierName = data.cashierName || 'N/A';
+      
+      // Charger les paramètres de devise
+      const settingsResponse = await fetch('/api/settings');
+      const settingsData = await settingsResponse.json();
+      const currency = settingsData.settings?.primaryCurrency || 'FC';
+      const currencySymbol = currency === 'USD' ? '$' : 'FC';
+      
+      // Fonction pour formater la devise
+      const formatCurrency = (amount) => {
+        const formatted = new Intl.NumberFormat('fr-FR').format(Math.round(amount));
+        return `${formatted} ${currencySymbol}`;
+      };
+      
+      // Construire le HTML des articles
+      let itemsHtml = '';
+      items.forEach(item => {
+        itemsHtml += `
+          <tr class="border-b">
+            <td class="py-2">${item.product_name}</td>
+            <td class="py-2 text-center">${item.quantity}</td>
+            <td class="py-2 text-right">${formatCurrency(item.unit_price)}</td>
+            <td class="py-2 text-right font-semibold">${formatCurrency(item.subtotal)}</td>
+          </tr>
+        `;
+      });
+      
+      const preview = `
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+          <!-- En-tête -->
+          <div class="text-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-gray-800">VENDIA Commerce</h3>
+            <p class="text-sm text-gray-600">Kinshasa, RDC</p>
+            <p class="text-sm text-gray-600">+243 XXX XXX XXX</p>
+          </div>
+          
+          <!-- Informations de la facture -->
+          <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded mb-4">
+            <div>
+              <p class="text-sm text-gray-600">Numéro de facture</p>
+              <p class="font-semibold">#${sale.id}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Date</p>
+              <p class="font-semibold">${new Date(sale.created_at).toLocaleString('fr-FR')}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Client</p>
+              <p class="font-semibold">${customerName}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Caissier</p>
+              <p class="font-semibold">${cashierName}</p>
+            </div>
+          </div>
+          
+          <!-- Articles -->
+          <div class="mb-4">
+            <h4 class="font-semibold mb-2 text-gray-700">Articles</h4>
+            <table class="w-full">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="py-2 px-2 text-left text-sm">Article</th>
+                  <th class="py-2 px-2 text-center text-sm">Qté</th>
+                  <th class="py-2 px-2 text-right text-sm">Prix unit.</th>
+                  <th class="py-2 px-2 text-right text-sm">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Totaux -->
+          <div class="border-t pt-4 space-y-2">
+            <div class="flex justify-between">
+              <span class="text-gray-700">Sous-total:</span>
+              <span class="font-semibold">${formatCurrency(sale.total_amount)}</span>
+            </div>
+            ${sale.discount > 0 ? `
+            <div class="flex justify-between text-red-600">
+              <span>Remise:</span>
+              <span class="font-semibold">-${formatCurrency(sale.discount)}</span>
+            </div>
+            ` : ''}
+            <div class="flex justify-between text-xl font-bold border-t pt-2 mt-2">
+              <span class="text-gray-800">TOTAL:</span>
+              <span class="text-green-600">${formatCurrency(sale.final_amount)}</span>
+            </div>
+          </div>
+          
+          <!-- Pied de page -->
+          <div class="text-center mt-6 pt-4 border-t">
+            <p class="text-gray-600">Mode de paiement: <span class="font-semibold">${getPaymentMethodLabel(sale.payment_method)}</span></p>
+            <p class="text-sm text-gray-500 mt-2">Merci de votre visite !</p>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('receiptPreview').innerHTML = preview;
+    } catch (error) {
+      console.error('Erreur chargement reçu:', error);
+      document.getElementById('receiptPreview').innerHTML = `
+        <div class="text-center text-red-600">
+          <i class="fas fa-exclamation-circle text-2xl"></i>
+          <p class="mt-2">Erreur de chargement du reçu</p>
+        </div>
+      `;
+    }
+  }
+
+  // Libellés des méthodes de paiement
+  function getPaymentMethodLabel(method) {
+    const labels = {
+      'cash': 'Espèces',
+      'card': 'Carte bancaire',
+      'mobile_money': 'Mobile Money',
+      'other': 'Autre'
+    };
+    return labels[method] || method;
+  }
+
+  // Imprimer le reçu
+  async function printReceipt() {
+    if (!lastSaleId) return;
+    
+    try {
+      // Récupérer les données de la vente
+      const response = await apiRequest(`/api/sales/${lastSaleId}`);
+      const data = await response.json();
+      const sale = data.sale;
+      const items = data.items;
+      const customerName = data.customerName || 'Client anonyme';
+      const cashierName = data.cashierName || 'N/A';
+      
+      const settingsResponse = await fetch('/api/settings/currency/info');
+      const currencyInfo = await settingsResponse.json();
+      
+      // Calculer totaux
+      const totalFC = sale.final_amount;
+      const totalUSD = totalFC / currencyInfo.exchangeRate;
+      
+      // Créer une fenêtre d'impression
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Facture N° ${sale.id}</title>
+          <style>
+            @page {
+              size: 80mm auto;
+              margin: 5mm;
+            }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 12px;
+              line-height: 1.4;
+              max-width: 80mm;
+              margin: 0 auto;
+              padding: 10px;
+            }
+            .center {
+              text-align: center;
+            }
+            .bold {
+              font-weight: bold;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 15px;
+              border-bottom: 2px dashed #000;
+              padding-bottom: 10px;
+            }
+            .header h1 {
+              font-size: 18px;
+              margin-bottom: 5px;
+            }
+            .info {
+              margin: 10px 0;
+              padding: 10px 0;
+              border-bottom: 1px dashed #000;
+            }
+            .info-line {
+              display: flex;
+              justify-content: space-between;
+              margin: 3px 0;
+            }
+            .items {
+              margin: 10px 0;
+            }
+            .items table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .items th {
+              text-align: left;
+              border-bottom: 1px solid #000;
+              padding: 5px 0;
+            }
+            .items td {
+              padding: 5px 0;
+            }
+            .items .right {
+              text-align: right;
+            }
+            .totals {
+              margin-top: 10px;
+              padding-top: 10px;
+              border-top: 1px dashed #000;
+            }
+            .total-line {
+              display: flex;
+              justify-content: space-between;
+              margin: 5px 0;
+            }
+            .total-line.final {
+              font-size: 14px;
+              font-weight: bold;
+              border-top: 2px solid #000;
+              padding-top: 5px;
+              margin-top: 5px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 15px;
+              padding-top: 10px;
+              border-top: 1px dashed #000;
+              font-size: 11px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 5mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Mon Commerce</h1>
+            <div>Kinshasa, RDC</div>
+            <div>+243 XX XX XX XX</div>
+          </div>
+          
+          <div class="info">
+            <div class="info-line">
+              <span class="bold">N° de Facture:</span>
+              <span>${sale.id}</span>
+            </div>
+            <div class="info-line">
+              <span class="bold">Date:</span>
+              <span>${new Date(sale.created_at).toLocaleString('fr-FR')}</span>
+            </div>
+            <div class="info-line">
+              <span class="bold">Client:</span>
+              <span>${customerName}</span>
+            </div>
+            <div class="info-line">
+              <span class="bold">Caissier:</span>
+              <span>${cashierName}</span>
+            </div>
+          </div>
+          
+          <div class="items">
+            <table>
+              <thead>
+                <tr>
+                  <th>Article</th>
+                  <th class="right">Qté</th>
+                  <th class="right">P.U.</th>
+                  <th class="right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(item => `
+                  <tr>
+                    <td>${item.product_name}</td>
+                    <td class="right">${item.quantity}</td>
+                    <td class="right">${Math.round(item.unit_price)} FC</td>
+                    <td class="right">${Math.round(item.subtotal)} FC</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="totals">
+            <div class="total-line">
+              <span>Sous-total:</span>
+              <span>${Math.round(sale.total_amount)} FC</span>
+            </div>
+            ${sale.discount > 0 ? `
+            <div class="total-line">
+              <span>Remise:</span>
+              <span>-${Math.round(sale.discount)} FC</span>
+            </div>
+            ` : ''}
+            <div class="total-line final">
+              <span>TOTAL:</span>
+              <span>${Math.round(totalFC)} FC</span>
+            </div>
+            <div class="total-line">
+              <span>Équivalent:</span>
+              <span>${totalUSD.toFixed(2)} $</span>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p class="bold">Merci de votre visite !</p>
+            <p>Paiement: ${getPaymentMethodLabel(sale.payment_method)}</p>
+            <p style="margin-top: 10px; font-size: 10px;">
+              Imprimé le ${new Date().toLocaleString('fr-FR')}
+            </p>
+          </div>
+          
+          <sc`+`ript>
+            // Attendre que le contenu soit chargé puis lancer l'impression
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                // Fermer la fenêtre après impression (optionnel)
+                // window.onafterprint = function() { window.close(); }
+              }, 250);
+            }
+          </sc`+`ript>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+    } catch (error) {
+      console.error('Erreur impression:', error);
+      alert('Erreur lors de la préparation de l\'impression');
+    }
+  }
+
+  // Télécharger le reçu PDF
+  function downloadReceipt() {
+    if (lastSaleId) {
+      window.open(`/api/sales/${lastSaleId}/receipt`, '_blank');
+    }
+  }
+
+  // Fermer le modal de succès
+  function closeSuccessModal() {
+    document.getElementById('successModal').classList.add('hidden');
+    lastSaleId = null;
+  }
+
+  // Recherche de produits
+  document.getElementById('productSearch').addEventListener('input', (e) => {
+    const search = e.target.value.toLowerCase();
+    const filtered = products.filter(p => 
+      p.name.toLowerCase().includes(search) || 
+      (p.barcode && p.barcode.includes(search))
+    );
+    displayProducts(filtered);
+  });
+
+  // Recherche par code-barres (Enter)
+  document.getElementById('productSearch').addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter') {
+      const barcode = e.target.value.trim();
+      const response = await apiRequest(`/api/products/search/barcode/${barcode}`);
+      const data = await response.json();
+      
+      if (data.product) {
+        addToCart(data.product.id);
+        e.target.value = '';
+      }
+    }
+  });
+
+  // Charger au démarrage
+  (async function init() {
+    try {
+      await loadCurrencySettings();
+      await loadProducts();
+      await loadCustomers();
+      console.log('✅ Initialisation POS terminée');
+    } catch (error) {
+      console.error('❌ Erreur initialisation POS:', error);
+      alert('Erreur lors du chargement du POS. Veuillez actualiser la page.');
+    }
+  })();
+</script>
+
+<%- include('partials/footer') %>

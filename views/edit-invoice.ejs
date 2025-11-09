@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier la Facture - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <%- include('partials/navbar') %>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-edit text-blue-600"></i>
+                    Modifier la Facture #<span id="invoiceNumber"></span>
+                </h1>
+                <a href="/invoices" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Retour à la liste
+                </a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <!-- Info facture -->
+                <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Date de création</p>
+                            <p class="font-semibold" id="saleDate"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Caissier</p>
+                            <p class="font-semibold" id="cashierName"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Mode de paiement</p>
+                            <p class="font-semibold" id="paymentMethod"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Total original</p>
+                            <p class="font-semibold text-green-600" id="originalTotal"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sélection client -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2"></i>Client (optionnel)
+                    </label>
+                    <select id="customerId" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Client anonyme</option>
+                    </select>
+                </div>
+
+                <!-- Liste des produits disponibles -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">
+                        <i class="fas fa-box mr-2 text-blue-600"></i>
+                        Ajouter des articles
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="productsList">
+                        <!-- Produits chargés ici -->
+                    </div>
+                </div>
+
+                <!-- Panier -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">
+                        <i class="fas fa-shopping-cart mr-2 text-green-600"></i>
+                        Articles de la facture
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Article</th>
+                                    <th class="px-4 py-2 text-center">Quantité</th>
+                                    <th class="px-4 py-2 text-right">Prix unitaire</th>
+                                    <th class="px-4 py-2 text-right">Sous-total</th>
+                                    <th class="px-4 py-2 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartItems">
+                                <!-- Articles du panier -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="emptyCart" class="text-center py-8 text-gray-500 hidden">
+                        <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                        <p>Aucun article dans la facture</p>
+                    </div>
+                </div>
+
+                <!-- Totaux -->
+                <div class="border-t pt-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end">
+                        <div class="mb-4 md:mb-0">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-comment mr-2"></i>Notes
+                            </label>
+                            <textarea id="notes" rows="3" class="w-full md:w-80 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Notes supplémentaires..."></textarea>
+                        </div>
+
+                        <div class="w-full md:w-80 space-y-2">
+                            <div class="flex justify-between text-lg">
+                                <span>Sous-total:</span>
+                                <span class="font-semibold" id="subtotal">0 FC</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-lg">Remise:</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="discount" value="0" min="0" class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                                    <span>FC</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-xl font-bold border-t pt-2">
+                                <span>TOTAL:</span>
+                                <span class="text-green-600" id="total">0 FC</span>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span>Équivalent:</span>
+                                <span id="totalSecondary">0 $</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="flex gap-4 justify-end mt-6 pt-6 border-t">
+                    <a href="/invoices" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
+                        <i class="fas fa-times mr-2"></i>Annuler
+                    </a>
+                    <button onclick="saveInvoice()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-save mr-2"></i>Enregistrer les modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let cart = [];
+        let products = [];
+        let customers = [];
+        let saleId = null;
+        let originalSale = null;
+        let exchangeRate = 2500;
+
+        // Récupérer l'ID de la vente depuis l'URL
+        const pathParts = window.location.pathname.split('/');
+        saleId = pathParts[pathParts.length - 1];
+
+        // Charger les données
+        async function loadData() {
+            try {
+                // Charger la vente
+                const saleResponse = await fetch(`/api/sales/${saleId}`);
+                const saleData = await saleResponse.json();
+                originalSale = saleData.sale;
+
+                // Afficher les infos de base
+                document.getElementById('invoiceNumber').textContent = saleData.sale.id;
+                document.getElementById('saleDate').textContent = new Date(saleData.sale.created_at).toLocaleString('fr-FR');
+                document.getElementById('originalTotal').textContent = formatCurrency(saleData.sale.final_amount, 'FC');
+                document.getElementById('paymentMethod').textContent = getPaymentMethodLabel(saleData.sale.payment_method);
+                document.getElementById('discount').value = saleData.sale.discount;
+                document.getElementById('notes').value = saleData.sale.notes || '';
+
+                // Charger le nom du caissier
+                const usersResponse = await fetch('/api/users');
+                const usersData = await usersResponse.json();
+                const user = usersData.users.find(u => u.id === saleData.sale.user_id);
+                document.getElementById('cashierName').textContent = user ? user.username : 'N/A';
+
+                // Charger les clients
+                const customersResponse = await fetch('/api/customers');
+                const customersData = await customersResponse.json();
+                customers = customersData.customers;
+                
+                const customerSelect = document.getElementById('customerId');
+                customers.forEach(customer => {
+                    const option = document.createElement('option');
+                    option.value = customer.id;
+                    option.textContent = `${customer.name} (${customer.phone})`;
+                    if (customer.id === saleData.sale.customer_id) {
+                        option.selected = true;
+                    }
+                    customerSelect.appendChild(option);
+                });
+
+                // Charger les produits
+                const productsResponse = await fetch('/api/products');
+                const productsData = await productsResponse.json();
+                products = productsData.products;
+                displayProducts();
+
+                // Charger les items dans le panier
+                cart = saleData.items.map(item => ({
+                    productId: item.product_id,
+                    productName: item.product_name,
+                    quantity: item.quantity,
+                    unitPrice: item.unit_price
+                }));
+                updateCart();
+
+                // Charger le taux de change
+                const currencyResponse = await fetch('/api/settings/currency/info');
+                const currencyData = await currencyResponse.json();
+                exchangeRate = currencyData.exchangeRate;
+
+            } catch (error) {
+                Swal.fire('Erreur', 'Erreur lors du chargement des données: ' + error.message, 'error');
+            }
+        }
+
+        function displayProducts() {
+            const container = document.getElementById('productsList');
+            container.innerHTML = '';
+
+            products.forEach(product => {
+                if (product.stock <= 0) return;
+
+                const card = document.createElement('div');
+                card.className = 'border rounded-lg p-4 hover:shadow-md transition cursor-pointer';
+                card.onclick = () => addToCart(product);
+
+                card.innerHTML = `
+                    <h4 class="font-semibold text-gray-800 mb-1">${product.name}</h4>
+                    <p class="text-sm text-gray-600 mb-2">${product.category}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-bold text-green-600">${formatCurrency(product.price, 'FC')}</span>
+                        <span class="text-xs text-gray-500">Stock: ${product.stock}</span>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.productId === product.id);
+
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    productId: product.id,
+                    productName: product.name,
+                    quantity: 1,
+                    unitPrice: product.price
+                });
+            }
+
+            updateCart();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.productId !== productId);
+            updateCart();
+        }
+
+        function updateQuantity(productId, change) {
+            const item = cart.find(i => i.productId === productId);
+            if (!item) return;
+
+            item.quantity += change;
+
+            if (item.quantity <= 0) {
+                removeFromCart(productId);
+            } else {
+                updateCart();
+            }
+        }
+
+        function updateCart() {
+            const tbody = document.getElementById('cartItems');
+            const emptyCart = document.getElementById('emptyCart');
+
+            if (cart.length === 0) {
+                tbody.innerHTML = '';
+                emptyCart.classList.remove('hidden');
+            } else {
+                emptyCart.classList.add('hidden');
+                tbody.innerHTML = '';
+
+                cart.forEach(item => {
+                    const subtotal = item.quantity * item.unitPrice;
+                    const row = document.createElement('tr');
+                    row.className = 'border-b hover:bg-gray-50';
+
+                    row.innerHTML = `
+                        <td class="px-4 py-3">${item.productName}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="updateQuantity(${item.productId}, -1)" class="w-8 h-8 bg-red-500 text-white rounded hover:bg-red-600">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="w-12 text-center font-semibold">${item.quantity}</span>
+                                <button onclick="updateQuantity(${item.productId}, 1)" class="w-8 h-8 bg-green-500 text-white rounded hover:bg-green-600">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-right">${formatCurrency(item.unitPrice, 'FC')}</td>
+                        <td class="px-4 py-3 text-right font-semibold">${formatCurrency(subtotal, 'FC')}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="removeFromCart(${item.productId})" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+            }
+
+            updateTotals();
+        }
+
+        function updateTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            const total = subtotal - discount;
+            const totalUSD = total / exchangeRate;
+
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal, 'FC');
+            document.getElementById('total').textContent = formatCurrency(total, 'FC');
+            document.getElementById('totalSecondary').textContent = formatCurrency(totalUSD, 'USD');
+        }
+
+        async function saveInvoice() {
+            if (cart.length === 0) {
+                Swal.fire('Attention', 'Ajoutez au moins un article à la facture', 'warning');
+                return;
+            }
+
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            const notes = document.getElementById('notes').value;
+            const customerId = document.getElementById('customerId').value || null;
+
+            const items = cart.map(item => ({
+                productId: item.productId,
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice
+            }));
+
+            try {
+                const response = await fetch(`/api/sales/${saleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        items: items,
+                        discount: discount,
+                        notes: notes,
+                        customerId: customerId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Succès!',
+                        text: 'Facture modifiée avec succès',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = '/invoices';
+                    });
+                } else {
+                    Swal.fire('Erreur', data.error || 'Erreur lors de la modification', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Erreur', 'Erreur lors de la modification: ' + error.message, 'error');
+            }
+        }
+
+        function formatCurrency(amount, currency = 'FC') {
+            const formatted = new Intl.NumberFormat('fr-FR').format(Math.round(amount));
+            return currency === 'FC' ? `${formatted} FC` : `${formatted.toFixed(2)} $`;
+        }
+
+        function getPaymentMethodLabel(method) {
+            const labels = {
+                'cash': 'Espèces',
+                'card': 'Carte bancaire',
+                'mobile_money': 'Mobile Money',
+                'other': 'Autre'
+            };
+            return labels[method] || method;
+        }
+
+        // Événement pour mettre à jour les totaux quand la remise change
+        document.getElementById('discount').addEventListener('input', updateTotals);
+
+        // Charger les données au chargement de la page
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Statistiques -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Ventes aujourd'hui</p>
+          <p class="text-3xl font-bold text-blue-600" id="todaySales">0</p>
+        </div>
+        <i class="fas fa-shopping-cart text-4xl text-blue-200"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">CA du jour</p>
+          <p class="text-3xl font-bold text-green-600" id="todayRevenue">0</p>
+        </div>
+        <i class="fas fa-money-bill-wave text-4xl text-green-200"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Produits en stock</p>
+          <p class="text-3xl font-bold text-purple-600" id="totalProducts">0</p>
+        </div>
+        <i class="fas fa-boxes text-4xl text-purple-200"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Stock faible</p>
+          <p class="text-3xl font-bold text-red-600" id="lowStock">0</p>
+        </div>
+        <i class="fas fa-exclamation-triangle text-4xl text-red-200"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Ventes des 7 derniers jours</h2>
+      <canvas id="salesChart"></canvas>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Paiements par méthode</h2>
+      <canvas id="paymentChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Raccourcis -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <a href="/pos" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-8 hover:shadow-xl transition transform hover:-translate-y-1">
+      <i class="fas fa-cash-register text-5xl mb-4"></i>
+      <h3 class="text-2xl font-bold mb-2">Point de Vente</h3>
+      <p>Enregistrer une nouvelle vente</p>
+    </a>
+
+    <a href="/products" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-8 hover:shadow-xl transition transform hover:-translate-y-1">
+      <i class="fas fa-box text-5xl mb-4"></i>
+      <h3 class="text-2xl font-bold mb-2">Gestion Produits</h3>
+      <p>Gérer le catalogue et le stock</p>
+    </a>
+
+    <a href="/reports" class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-lg p-8 hover:shadow-xl transition transform hover:-translate-y-1">
+      <i class="fas fa-chart-bar text-5xl mb-4"></i>
+      <h3 class="text-2xl font-bold mb-2">Rapports</h3>
+      <p>Consulter les statistiques</p>
+    </a>
+  </div>
+</div>
+
+<script>
+  let currentCurrency = 'FC';
+  let currencySymbol = 'FC';
+
+  // Charger les paramètres de devise
+  async function loadCurrencySettings() {
+    try {
+      const response = await fetch('/api/settings');
+      const data = await response.json();
+      if (data.settings && data.settings.primary_currency) {
+        currentCurrency = data.settings.primary_currency;
+        currencySymbol = currentCurrency === 'USD' ? '$' : 'FC';
+      }
+    } catch (error) {
+      console.log('Utilisation de la devise par défaut: FC');
+    }
+  }
+
+  // Charger les statistiques
+  async function loadStats() {
+    await loadCurrencySettings(); // Charger la devise d'abord
+    try {
+      const response = await fetch('/api/reports/stats');
+      const data = await response.json();
+      
+      document.getElementById('todaySales').textContent = data.stats.today.count;
+      document.getElementById('todayRevenue').textContent = data.stats.today.total.toFixed(0) + ' ' + currencySymbol;
+      document.getElementById('totalProducts').textContent = data.stats.products.count;
+      document.getElementById('lowStock').textContent = data.stats.lowStock;
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  }
+
+  // Graphique des ventes
+  async function loadSalesChart() {
+    try {
+      const response = await fetch('/api/reports/sales-by-day?days=7');
+      const data = await response.json();
+      
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.data.map(d => new Date(d.date).toLocaleDateString('fr-FR')),
+          datasets: [{
+            label: `Ventes (${currencySymbol})`,
+            data: data.data.map(d => d.total),
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  }
+
+  // Graphique des paiements
+  async function loadPaymentChart() {
+    try {
+      const response = await fetch('/api/reports/payment-methods');
+      const data = await response.json();
+      
+      const ctx = document.getElementById('paymentChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: data.data.map(d => {
+            const labels = {
+              'cash': 'Espèces',
+              'card': 'Carte',
+              'mobile_money': 'Mobile Money'
+            };
+            return labels[d.payment_method] || d.payment_method;
+          }),
+          datasets: [{
+            data: data.data.map(d => d.total),
+            backgroundColor: [
+              'rgb(34, 197, 94)',
+              'rgb(59, 130, 246)',
+              'rgb(168, 85, 247)',
+              'rgb(251, 146, 60)'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  }
+
+  // Charger au démarrage
+  loadStats();
+  loadSalesChart();
+  loadPaymentChart();
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test POS Debug</title>
+</head>
+<body>
+    <h1>Test API Produits</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            // 1. Vérifier sessionId
+            const sessionId = localStorage.getItem('sessionId');
+            resultDiv.innerHTML += `<p>SessionId: ${sessionId || '❌ MANQUANT'}</p>`;
+            
+            if (!sessionId) {
+                resultDiv.innerHTML += `<p style="color:red">⚠️ Pas de session! Allez sur /login d'abord</p>`;
+                return;
+            }
+            
+            try {
+                // 2. Tester l'API products
+                const response = await fetch('/api/products', {
+                    headers: {
+                        'X-Session-Id': sessionId
+                    }
+                });
+                
+                resultDiv.innerHTML += `<p>Status: ${response.status}</p>`;
+                
+                const data = await response.json();
+                resultDiv.innerHTML += `<p>Données reçues:</p>`;
+                resultDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.products) {
+                    resultDiv.innerHTML += `<p style="color:green">✅ ${data.products.length} produits trouvés</p>`;
+                    data.products.forEach(p => {
+                        resultDiv.innerHTML += `<p>- ${p.name} : ${p.price} FC (Stock: ${p.stock})</p>`;
+                    });
+                } else {
+                    resultDiv.innerHTML += `<p style="color:red">❌ Pas de propriété 'products'</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML += `<p style="color:red">Erreur: ${error.message}</p>`;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Factures - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <%- include('partials/header') %>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-file-invoice text-blue-600"></i>
+                Gestion des Factures
+            </h1>
+        </div>
+
+        <!-- Filtres -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">Filtres</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date début</label>
+                    <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date fin</label>
+                    <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mode de paiement</label>
+                    <select id="paymentMethod" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tous</option>
+                        <option value="cash">Espèces</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadInvoices()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-search mr-2"></i>Rechercher
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des factures -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N°</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caissier</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remise</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net à payer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Les factures seront chargées ici -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Résumé des totaux -->
+            <div id="totalSummary" class="hidden border-t-2 border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                <div class="max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Total brut -->
+                        <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">Total brut</p>
+                                    <p id="totalBrut" class="text-2xl font-bold text-blue-600">0 FC</p>
+                                </div>
+                                <div class="bg-blue-100 rounded-full p-3">
+                                    <i class="fas fa-calculator text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Total remises -->
+                        <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">Total remises</p>
+                                    <p id="totalRemises" class="text-2xl font-bold text-red-600">0 FC</p>
+                                </div>
+                                <div class="bg-red-100 rounded-full p-3">
+                                    <i class="fas fa-tags text-red-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Total net -->
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4">
+                            <div class="text-white">
+                                <p class="text-sm mb-1 opacity-90">TOTAL NET À PAYER</p>
+                                <p id="totalNet" class="text-3xl font-bold">0 FC</p>
+                                <p id="invoiceCount" class="text-xs mt-2 opacity-80">0 facture(s)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="noData" class="text-center py-12 hidden">
+                <i class="fas fa-inbox text-gray-400 text-6xl mb-4"></i>
+                <p class="text-gray-500 text-lg">Aucune facture trouvée</p>
+            </div>
+
+            <div id="loading" class="text-center py-12">
+                <i class="fas fa-spinner fa-spin text-blue-600 text-4xl"></i>
+                <p class="text-gray-500 mt-4">Chargement...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de suppression -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmer la suppression</h3>
+                <p class="text-gray-600 mb-6">Êtes-vous sûr de vouloir supprimer cette facture ? Cette action est irréversible.</p>
+                <div class="flex gap-4 justify-center">
+                    <button onclick="closeDeleteModal()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
+                        Annuler
+                    </button>
+                    <button onclick="confirmDelete()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-trash mr-2"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de détails de facture -->
+    <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-lg p-8 max-w-3xl w-full mx-4 my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+                    Détails de la facture
+                </h3>
+                <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="invoiceDetails">
+                <!-- Les détails seront chargés ici -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let saleToDelete = null;
+        let allInvoices = [];
+        let currentCurrency = 'FC';
+        let currencySymbol = 'FC';
+        let currentUser = JSON.parse(localStorage.getItem('user')) || {};
+
+        // Charger les paramètres de devise
+        async function loadCurrencySettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                if (data.settings && data.settings.primary_currency) {
+                    currentCurrency = data.settings.primary_currency;
+                    currencySymbol = currentCurrency === 'USD' ? '$' : 'FC';
+                }
+            } catch (error) {
+                console.log('Utilisation de la devise par défaut: FC');
+            }
+        }
+
+        // Charger les factures
+        async function loadInvoices() {
+            await loadCurrencySettings(); // Charger la devise d'abord
+            
+            const loading = document.getElementById('loading');
+            const noData = document.getElementById('noData');
+            const table = document.getElementById('invoicesTable');
+
+            loading.classList.remove('hidden');
+            noData.classList.add('hidden');
+            table.innerHTML = '';
+
+            try {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const paymentMethod = document.getElementById('paymentMethod').value;
+
+                let url = '/api/sales?limit=1000';
+                if (startDate) url += `&startDate=${startDate}`;
+                if (endDate) url += `&endDate=${endDate}`;
+                if (paymentMethod) url += `&paymentMethod=${paymentMethod}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                loading.classList.add('hidden');
+
+                if (!data.sales || data.sales.length === 0) {
+                    noData.classList.remove('hidden');
+                    document.getElementById('totalSummary').classList.add('hidden');
+                    return;
+                }
+
+                allInvoices = data.sales;
+
+                // Calculer les totaux
+                let totalBrut = 0;
+                let totalRemises = 0;
+                let totalNet = 0;
+
+                // Charger les utilisateurs pour afficher les noms
+                const usersMap = {};
+                try {
+                    const usersResponse = await apiRequest('/api/users');
+                    const usersData = await usersResponse.json();
+                    if (usersData.users && Array.isArray(usersData.users)) {
+                        usersData.users.forEach(user => {
+                            usersMap[user._id] = user.username;
+                        });
+                    }
+                } catch (error) {
+                    console.log('Impossible de charger les utilisateurs:', error);
+                }
+
+                data.sales.forEach(sale => {
+                    // Ajouter aux totaux
+                    totalBrut += sale.total_amount || 0;
+                    totalRemises += sale.discount || 0;
+                    totalNet += sale.final_amount || 0;
+
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50';
+
+                    const date = new Date(sale.created_at).toLocaleString('fr-FR');
+                    const username = usersMap[sale.user_id] || 'N/A';
+                    const customerName = sale.customer_name || 'Client anonyme';
+                    const paymentLabel = getPaymentMethodLabel(sale.payment_method);
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#${sale.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${customerName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${username}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(sale.total_amount)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-${formatCurrency(sale.discount)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">${formatCurrency(sale.final_amount)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span class="px-2 py-1 text-xs rounded-full ${getPaymentBadgeClass(sale.payment_method)}">
+                                ${paymentLabel}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <button onclick="viewDetails(${sale.id})" class="text-blue-600 hover:text-blue-800 mr-3" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <a href="/api/sales/${sale.id}/receipt" target="_blank" class="text-purple-600 hover:text-purple-800 mr-3" title="Télécharger PDF">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            ${currentUser.role === 'admin' ? `
+                                <button onclick="openDeleteModal('${sale._id || sale.id}')" class="text-red-600 hover:text-red-800" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    `;
+                    table.appendChild(row);
+                });
+
+                // Afficher le résumé des totaux
+                document.getElementById('totalSummary').classList.remove('hidden');
+                document.getElementById('totalBrut').textContent = formatCurrency(totalBrut);
+                document.getElementById('totalRemises').textContent = formatCurrency(totalRemises);
+                document.getElementById('totalNet').textContent = formatCurrency(totalNet);
+                document.getElementById('invoiceCount').textContent = `${data.sales.length} facture${data.sales.length > 1 ? 's' : ''}`;
+
+            } catch (error) {
+                loading.classList.add('hidden');
+                Swal.fire('Erreur', 'Erreur lors du chargement des factures: ' + error.message, 'error');
+            }
+        }
+
+        function getPaymentMethodLabel(method) {
+            const labels = {
+                'cash': 'Espèces',
+                'card': 'Carte',
+                'mobile_money': 'Mobile Money',
+                'other': 'Autre'
+            };
+            return labels[method] || method;
+        }
+
+        function getPaymentBadgeClass(method) {
+            const classes = {
+                'cash': 'bg-green-100 text-green-800',
+                'card': 'bg-blue-100 text-blue-800',
+                'mobile_money': 'bg-purple-100 text-purple-800',
+                'other': 'bg-gray-100 text-gray-800'
+            };
+            return classes[method] || 'bg-gray-100 text-gray-800';
+        }
+
+        function formatCurrency(amount) {
+            const formatted = new Intl.NumberFormat('fr-FR').format(Math.round(amount));
+            return `${formatted} ${currencySymbol}`;
+        }
+
+        // Voir les détails d'une facture
+        async function viewDetails(saleId) {
+            try {
+                const response = await fetch(`/api/sales/${saleId}`);
+                const data = await response.json();
+
+                const date = new Date(data.sale.created_at).toLocaleString('fr-FR');
+                const paymentLabel = getPaymentMethodLabel(data.sale.payment_method);
+
+                let itemsHtml = '';
+                data.items.forEach(item => {
+                    itemsHtml += `
+                        <tr class="border-b">
+                            <td class="py-2">${item.product_name}</td>
+                            <td class="py-2 text-center">${item.quantity}</td>
+                            <td class="py-2 text-right">${formatCurrency(item.unit_price)}</td>
+                            <td class="py-2 text-right font-semibold">${formatCurrency(item.subtotal)}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('invoiceDetails').innerHTML = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded">
+                            <div>
+                                <p class="text-sm text-gray-600">Numéro de facture</p>
+                                <p class="font-semibold">#${data.sale.id}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Date</p>
+                                <p class="font-semibold">${date}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Mode de paiement</p>
+                                <p class="font-semibold">${paymentLabel}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Notes</p>
+                                <p class="font-semibold">${data.sale.notes || 'Aucune'}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-semibold mb-2">Articles</h4>
+                            <table class="w-full">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="py-2 px-2 text-left">Article</th>
+                                        <th class="py-2 px-2 text-center">Qté</th>
+                                        <th class="py-2 px-2 text-right">Prix unit.</th>
+                                        <th class="py-2 px-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <div class="flex justify-between mb-2">
+                                <span>Sous-total:</span>
+                                <span class="font-semibold">${formatCurrency(data.sale.total_amount)}</span>
+                            </div>
+                            <div class="flex justify-between mb-2 text-red-600">
+                                <span>Remise:</span>
+                                <span class="font-semibold">-${formatCurrency(data.sale.discount)}</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold border-t pt-2">
+                                <span>TOTAL:</span>
+                                <span class="text-green-600">${formatCurrency(data.sale.final_amount)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('detailsModal').classList.remove('hidden');
+            } catch (error) {
+                Swal.fire('Erreur', 'Erreur lors du chargement des détails: ' + error.message, 'error');
+            }
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        // Modifier une facture
+        function editInvoice(saleId) {
+            window.location.href = `/edit-invoice/${saleId}`;
+        }
+
+        // Supprimer une facture
+        function openDeleteModal(saleId) {
+            saleToDelete = saleId;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            saleToDelete = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        async function confirmDelete() {
+            if (!saleToDelete) return;
+
+            try {
+                const response = await apiRequest(`/api/sales/${saleToDelete}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erreur lors de la suppression');
+                }
+
+                const data = await response.json();
+                closeDeleteModal();
+                Swal.fire('Succès', 'Facture supprimée avec succès', 'success');
+                loadInvoices();
+            } catch (error) {
+                Swal.fire('Erreur', 'Erreur lors de la suppression: ' + error.message, 'error');
+            }
+        }
+
+        // Charger les factures au chargement de la page
+        window.addEventListener('DOMContentLoaded', () => {
+            // Définir les dates par défaut (7 derniers jours)
+            const today = new Date();
+            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('endDate').valueAsDate = today;
+            document.getElementById('startDate').valueAsDate = lastWeek;
+
+            loadInvoices();
+        });
+    </script>
+</body>
+</html>

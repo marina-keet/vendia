@@ -1,0 +1,51 @@
+{
+  "name": "gestion-commerce",
+  "version": "1.0.0",
+  "description": "Application web de gestion commerciale complète avec Node.js, Express et Tailwind CSS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "demo": "node demo.js",
+    "stats": "node maintenance.js stats",
+    "backup": "node maintenance.js backup",
+    "clean": "node maintenance.js clean-receipts",
+    "reset": "node maintenance.js reset"
+  },
+  "keywords": [
+    "commerce",
+    "pos",
+    "point-of-sale",
+    "gestion",
+    "ventes",
+    "inventory",
+    "stock",
+    "retail",
+    "shop",
+    "business"
+  ],
+  "author": "Marina",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/gestion-commerce"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^1.20.2",
+    "chart.js": "^4.4.0",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "mongoose": "^8.19.3",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.13.0",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

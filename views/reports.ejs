@@ -1,0 +1,821 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">
+    <i class="fas fa-chart-line text-blue-600 mr-2"></i>Rapports et Statistiques
+  </h1>
+
+  <!-- Filtres rapides -->
+  <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button onclick="filterToday()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+        <i class="fas fa-calendar-day mr-2"></i>Aujourd'hui
+      </button>
+      <button onclick="filterThisMonth()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+        <i class="fas fa-calendar-week mr-2"></i>Ce Mois
+      </button>
+      <button onclick="filterThisYear()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+        <i class="fas fa-calendar mr-2"></i>Cette Année
+      </button>
+      <button onclick="filterAll()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+        <i class="fas fa-infinity mr-2"></i>Tout
+      </button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Date de début</label>
+        <input type="date" id="startDate" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Date de fin</label>
+        <input type="date" id="endDate" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+      </div>
+      <button onclick="loadReports()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+        <i class="fas fa-filter mr-2"></i>Filtrer
+      </button>
+      <button onclick="exportReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+        <i class="fas fa-download mr-2"></i>Exporter
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques générales -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Ventes -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-white text-opacity-90 text-sm font-medium">Total Ventes</div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-shopping-bag text-xl"></i>
+        </div>
+      </div>
+      <div class="text-4xl font-bold mb-1" id="totalSales">0</div>
+      <div class="text-xs text-white text-opacity-80">factures enregistrées</div>
+    </div>
+
+    <!-- Chiffre d'affaires -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-white text-opacity-90 text-sm font-medium">Chiffre d'affaires</div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-dollar-sign text-xl"></i>
+        </div>
+      </div>
+      <div class="text-4xl font-bold mb-1" id="totalRevenue">0</div>
+      <div class="text-xs text-white text-opacity-80">revenu total généré</div>
+    </div>
+
+    <!-- Vente moyenne -->
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-white text-opacity-90 text-sm font-medium">Vente moyenne</div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-chart-line text-xl"></i>
+        </div>
+      </div>
+      <div class="text-4xl font-bold mb-1" id="avgSale">0</div>
+      <div class="text-xs text-white text-opacity-80">par transaction</div>
+    </div>
+
+    <!-- Articles vendus -->
+    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-white text-opacity-90 text-sm font-medium">Articles vendus</div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-box-open text-xl"></i>
+        </div>
+      </div>
+      <div class="text-4xl font-bold mb-1" id="totalItems">0</div>
+      <div class="text-xs text-white text-opacity-80">unités écoulées</div>
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Évolution des ventes (30 jours)</h2>
+      <canvas id="salesTrendChart"></canvas>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Ventes par catégorie</h2>
+      <canvas id="categoryChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Top produits -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Meilleurs ventes -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">
+        <i class="fas fa-trophy text-yellow-500 mr-2"></i>Top 10 - Meilleurs Ventes
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-green-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenu</th>
+            </tr>
+          </thead>
+          <tbody id="topProductsTable" class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td colspan="3" class="px-4 py-4 text-center text-gray-500">Chargement...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pires ventes -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">
+        <i class="fas fa-arrow-down text-red-500 mr-2"></i>Top 10 - Ventes Faibles
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-red-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenu</th>
+            </tr>
+          </thead>
+          <tbody id="worstProductsTable" class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td colspan="3" class="px-4 py-4 text-center text-gray-500">Chargement...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock des produits -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4">
+      <i class="fas fa-boxes text-blue-500 mr-2"></i>Stock Restant par Produit
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-blue-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Catégorie</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock Actuel</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+          </tr>
+        </thead>
+        <tbody id="stockTable" class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="5" class="px-4 py-4 text-center text-gray-500">Chargement...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Dernières ventes -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold mb-4">Historique des ventes</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Vente</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Articles</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paiement</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="salesHistoryTable" class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Chargement...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let salesData = [];
+  let currentCurrency = 'FC'; // Devise par défaut
+  let currencySymbol = 'FC';
+
+  // Charger les paramètres de devise
+  async function loadCurrencySettings() {
+    try {
+      const response = await fetch('/api/settings');
+      const data = await response.json();
+      if (data.settings && data.settings.primary_currency) {
+        currentCurrency = data.settings.primary_currency;
+        currencySymbol = currentCurrency === 'USD' ? '$' : 'FC';
+      }
+    } catch (error) {
+      console.log('Utilisation de la devise par défaut: FC');
+    }
+  }
+
+  // Filtres rapides
+  function filterToday() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = today;
+    loadReports();
+  }
+
+  function filterThisMonth() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = today.toISOString().split('T')[0];
+    document.getElementById('startDate').value = firstDay;
+    document.getElementById('endDate').value = lastDay;
+    loadReports();
+  }
+
+  function filterThisYear() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+    const lastDay = today.toISOString().split('T')[0];
+    document.getElementById('startDate').value = firstDay;
+    document.getElementById('endDate').value = lastDay;
+    loadReports();
+  }
+
+  function filterAll() {
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    loadReports();
+  }
+
+  // Charger tous les rapports
+  async function loadReports() {
+    try {
+      await loadCurrencySettings(); // Charger la devise d'abord
+      await Promise.all([
+        loadStats(),
+        loadTopProducts(),
+        loadWorstProducts(),
+        loadStockReport(),
+        loadSalesHistory(),
+        loadSalesTrendChart(),
+        loadCategoryChart()
+      ]);
+    } catch (error) {
+      console.error('Erreur lors du chargement des rapports:', error);
+      // Afficher un message à l'utilisateur si non connecté
+      if (error.message && error.message.includes('Non authentifié')) {
+        alert('⚠️ Vous devez être connecté pour voir les rapports.\n\nRedirection vers la page de connexion...');
+        window.location.href = '/login';
+      }
+    }
+  }
+
+  // Charger les statistiques
+  async function loadStats() {
+    try {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      // Utiliser l'endpoint stats pour les statistiques de base
+      let statsUrl = '/api/reports/stats?';
+      if (startDate) statsUrl += `startDate=${startDate}&`;
+      if (endDate) statsUrl += `endDate=${endDate}&`;
+      
+      const statsResponse = await fetch(statsUrl);
+      const statsData = await statsResponse.json();
+      
+      const totalSales = statsData.totalSales || 0;
+      const totalRevenue = statsData.totalRevenue || 0;
+      const avgSale = statsData.averageOrderValue || 0;
+      
+      // Calculer le nombre total d'articles vendus via l'endpoint top-products
+      let totalItems = 0;
+      try {
+        let itemsUrl = '/api/reports/top-products?limit=1000';
+        if (startDate) itemsUrl += `&startDate=${startDate}`;
+        if (endDate) itemsUrl += `&endDate=${endDate}`;
+        
+        const itemsResponse = await fetch(itemsUrl);
+        const itemsData = await itemsResponse.json();
+        if (itemsData && Array.isArray(itemsData)) {
+          totalItems = itemsData.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        }
+      } catch (error) {
+        console.error('Erreur lors du calcul des articles:', error);
+      }
+      
+      document.getElementById('totalSales').textContent = totalSales;
+      document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(0) + ' ' + currencySymbol;
+      document.getElementById('avgSale').textContent = avgSale.toFixed(0) + ' ' + currencySymbol;
+      document.getElementById('totalItems').textContent = totalItems;
+    } catch (error) {
+      console.error('Erreur lors du chargement des statistiques:', error);
+      document.getElementById('totalSales').textContent = '0';
+      document.getElementById('totalRevenue').textContent = '0 ' + currencySymbol;
+      document.getElementById('avgSale').textContent = '0 ' + currencySymbol;
+      document.getElementById('totalItems').textContent = '0';
+    }
+  }
+
+  // Charger les top produits
+  async function loadTopProducts() {
+    try {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      let url = '/api/reports/top-products?limit=10';
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const tbody = document.getElementById('topProductsTable');
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Aucune donnée</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.map((p, index) => {
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-4">
+              <div class="flex items-center">
+                <span class="font-bold text-yellow-500 mr-2">#${index + 1}</span>
+                <span class="font-medium text-sm">${p.name}</span>
+              </div>
+            </td>
+            <td class="px-4 py-4 font-bold text-green-600 text-sm">${p.quantity || 0}</td>
+            <td class="px-4 py-4 font-bold text-sm">${(p.revenue || 0).toFixed(0)} ${currencySymbol}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Erreur lors du chargement des top produits:', error);
+      const tbody = document.getElementById('topProductsTable');
+      tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-red-500">Erreur de chargement</td></tr>';
+    }
+  }
+
+  // Charger les produits qui se vendent le moins
+  async function loadWorstProducts() {
+    try {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      let url = '/api/reports/worst-products?limit=10';
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const tbody = document.getElementById('worstProductsTable');
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Aucune donnée</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.map((p, index) => {
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-4">
+              <div class="flex items-center">
+                <span class="font-bold text-red-500 mr-2">#${index + 1}</span>
+                <span class="font-medium text-sm">${p.name}</span>
+              </div>
+            </td>
+            <td class="px-4 py-4 font-bold text-red-600 text-sm">${p.quantity || 0}</td>
+            <td class="px-4 py-4 font-bold text-sm">${(p.revenue || 0).toFixed(0)} ${currencySymbol}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Erreur lors du chargement des produits faibles:', error);
+      const tbody = document.getElementById('worstProductsTable');
+      tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-red-500">Erreur de chargement</td></tr>';
+    }
+  }
+
+  // Charger le rapport de stock
+  async function loadStockReport() {
+    try {
+      const response = await fetch('/api/products/pos-list');
+      const data = await response.json();
+      const products = data.products || [];
+      
+      const tbody = document.getElementById('stockTable');
+      
+      if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Aucun produit</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = products.map(p => {
+        let stockStatus = '';
+        let statusClass = '';
+        
+        if (p.stock === 0) {
+          stockStatus = 'Rupture';
+          statusClass = 'bg-red-100 text-red-800';
+        } else if (p.stock <= 10) {
+          stockStatus = 'Faible';
+          statusClass = 'bg-yellow-100 text-yellow-800';
+        } else {
+          stockStatus = 'Suffisant';
+          statusClass = 'bg-green-100 text-green-800';
+        }
+        
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-4">
+              <div class="font-medium text-sm">${p.name}</div>
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-600">${p.category || 'N/A'}</td>
+            <td class="px-4 py-4 text-sm font-semibold">${p.price.toFixed(0)} ${currencySymbol}</td>
+            <td class="px-4 py-4 font-bold text-lg ${p.stock <= 10 ? 'text-red-600' : 'text-green-600'}">${p.stock}</td>
+            <td class="px-4 py-4">
+              <span class="px-2 py-1 text-xs rounded-full ${statusClass}">${stockStatus}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Erreur chargement stock:', error);
+      document.getElementById('stockTable').innerHTML = 
+        '<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Erreur de chargement</td></tr>';
+    }
+  }
+
+  // Charger l'historique des ventes
+  async function loadSalesHistory() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    let url = '/api/sales?limit=20';
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    const tbody = document.getElementById('salesHistoryTable');
+    
+    if (data.sales.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucune vente</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = data.sales.map(sale => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4 font-medium">#${sale.id}</td>
+        <td class="px-6 py-4">${new Date(sale.created_at).toLocaleString('fr-FR')}</td>
+        <td class="px-6 py-4 text-sm text-gray-600">${sale.notes || '-'}</td>
+        <td class="px-6 py-4">
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+            ${getPaymentLabel(sale.payment_method)}
+          </span>
+        </td>
+        <td class="px-6 py-4 font-bold">${sale.final_amount.toFixed(0)} ${currencySymbol}</td>
+        <td class="px-6 py-4">
+          <button onclick="viewSaleDetails(${sale.id})" class="text-blue-600 hover:text-blue-800 mr-2">
+            <i class="fas fa-eye"></i>
+          </button>
+          <a href="/api/sales/${sale.id}/receipt" target="_blank" class="text-green-600 hover:text-green-800">
+            <i class="fas fa-print"></i>
+          </a>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Graphique de tendance des ventes
+  async function loadSalesTrendChart() {
+    try {
+      const response = await fetch('/api/reports/sales-by-day?days=30');
+      const data = await response.json();
+      
+      if (!data.data || data.data.length === 0) {
+        console.log('Pas de données pour le graphique des ventes');
+        return;
+      }
+      
+      const ctx = document.getElementById('salesTrendChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.data.map(d => new Date(d.date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })),
+          datasets: [{
+            label: `Chiffre d'affaires (${currencySymbol})`,
+            data: data.data.map(d => d.total),
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur graphique ventes:', error);
+    }
+  }
+
+  // Graphique par catégorie
+  async function loadCategoryChart() {
+    try {
+      const response = await fetch('/api/reports/sales-by-category');
+      const data = await response.json();
+      
+      if (!data.data || data.data.length === 0) {
+        console.log('Pas de données pour le graphique des catégories');
+        return;
+      }
+      
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.data.map(d => d.category),
+          datasets: [{
+            label: `Revenu (${currencySymbol})`,
+            data: data.data.map(d => d.total_revenue),
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(249, 115, 22, 0.8)',
+              'rgba(168, 85, 247, 0.8)',
+              'rgba(236, 72, 153, 0.8)'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur graphique catégories:', error);
+    }
+  }
+
+  // Voir les détails d'une vente
+  async function viewSaleDetails(saleId) {
+    const response = await fetch(`/api/sales/${saleId}`);
+    const data = await response.json();
+    
+    alert(`Vente #${saleId}\n\nArticles:\n${data.items.map(i => `- ${i.product_name} x${i.quantity}`).join('\n')}\n\nTotal: ${data.sale.final_amount.toFixed(0)} ${currencySymbol}`);
+  }
+
+  // Obtenir le libellé du mode de paiement
+  function getPaymentLabel(method) {
+    const labels = {
+      'cash': 'Espèces',
+      'card': 'Carte',
+      'mobile_money': 'Mobile Money',
+      'other': 'Autre'
+    };
+    return labels[method] || method;
+  }
+
+  // Exporter le rapport complet
+  async function exportReport() {
+    try {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      // Récupérer toutes les données
+      const topProductsResponse = await fetch(`/api/reports/top-products?limit=50`);
+      const topProductsData = await topProductsResponse.json();
+      
+      const worstProductsResponse = await fetch(`/api/reports/worst-products?limit=50`);
+      const worstProductsData = await worstProductsResponse.json();
+      
+      const statsResponse = await fetch(`/api/reports/stats${startDate || endDate ? '?' : ''}${startDate ? 'startDate=' + startDate : ''}${endDate ? (startDate ? '&' : '') + 'endDate=' + endDate : ''}`);
+      const statsData = await statsResponse.json();
+      
+      // Calculer les statistiques
+      const totalSales = statsData.totalSales || 0;
+      const totalRevenue = statsData.totalRevenue || 0;
+      const avgSale = statsData.averageOrderValue || 0;
+      const totalItems = topProductsData.reduce((sum, p) => sum + (p.quantity || 0), 0);
+      
+      // Déterminer la période pour le message
+      const startDateObj = startDate ? new Date(startDate) : null;
+      const endDateObj = endDate ? new Date(endDate) : new Date();
+      
+      let periodeMessage = '';
+      if (startDate && endDate) {
+        const startMonth = startDateObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        const endMonth = endDateObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        if (startMonth === endMonth) {
+          periodeMessage = `Durant le mois de ${startMonth}`;
+        } else {
+          periodeMessage = `Durant la période du ${startDateObj.toLocaleDateString('fr-FR')} au ${endDateObj.toLocaleDateString('fr-FR')}`;
+        }
+      } else if (startDate) {
+        periodeMessage = `À partir du ${startDateObj.toLocaleDateString('fr-FR')}`;
+      } else if (endDate) {
+        periodeMessage = `Jusqu'au ${endDateObj.toLocaleDateString('fr-FR')}`;
+      } else {
+        periodeMessage = `Sur toute la période d'activité`;
+      }
+      
+      // Trouver le produit le plus vendu
+      const bestProduct = topProductsData.length > 0 ? topProductsData[0] : null;
+      const worstProduct = worstProductsData.length > 0 ? worstProductsData[0] : null;
+      
+      // Créer le rapport professionnel
+      let csvContent = '';
+      
+      // ═══════════════════════════════════════════════════════════════
+      // EN-TÊTE DU RAPPORT
+      // ═══════════════════════════════════════════════════════════════
+      csvContent += '╔═══════════════════════════════════════════════════════════════════════╗\n';
+      csvContent += '║                    RAPPORT DE VENTES PROFESSIONNEL                    ║\n';
+      csvContent += '║                         SYSTÈME DE GESTION POS                        ║\n';
+      csvContent += '╚═══════════════════════════════════════════════════════════════════════╝\n\n';
+      
+      csvContent += `📅 Date de génération: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} à ${new Date().toLocaleTimeString('fr-FR')}\n`;
+      csvContent += `📊 Période analysée: ${startDate || 'Début'} → ${endDate || "Aujourd'hui"}\n`;
+      csvContent += '\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
+      
+      // ═══════════════════════════════════════════════════════════════
+      // MESSAGE PROFESSIONNEL RÉCAPITULATIF
+      // ═══════════════════════════════════════════════════════════════
+      csvContent += '📝 RÉSUMÉ EXÉCUTIF\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
+      
+      csvContent += `${periodeMessage}, notre entreprise a réalisé ${totalSales} vente${totalSales > 1 ? 's' : ''} `;
+      csvContent += `pour un chiffre d'affaires total de ${totalRevenue.toFixed(0)} ${currencySymbol}. `;
+      
+      if (totalSales > 0) {
+        csvContent += `\n\nCela représente une vente moyenne de ${avgSale.toFixed(0)} ${currencySymbol} par transaction. `;
+        csvContent += `Au total, ${totalItems} article${totalItems > 1 ? 's ont' : ' a'} été vendu${totalItems > 1 ? 's' : ''}. `;
+        
+        if (bestProduct) {
+          csvContent += `\n\nLe produit phare de cette période est "${bestProduct.name}" avec ${bestProduct.quantity} unité${bestProduct.quantity > 1 ? 's' : ''} vendue${bestProduct.quantity > 1 ? 's' : ''}, `;
+          csvContent += `générant un revenu de ${(bestProduct.revenue || 0).toFixed(0)} ${currencySymbol}. `;
+        }
+        
+        if (worstProduct && worstProduct.quantity === 0) {
+          csvContent += `\n\nÀ noter que certains produits comme "${worstProduct.name}" n'ont enregistré aucune vente durant cette période, `;
+          csvContent += `ce qui pourrait nécessiter une révision de la stratégie commerciale ou du stock.`;
+        }
+      } else {
+        csvContent += `\n\nAucune vente n'a été enregistrée durant cette période.`;
+      }
+      
+      csvContent += '\n\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
+      
+      // ═══════════════════════════════════════════════════════════════
+      // TABLEAU 1: INDICATEURS CLÉS DE PERFORMANCE
+      // ═══════════════════════════════════════════════════════════════
+      csvContent += '📊 TABLEAU 1: INDICATEURS CLÉS DE PERFORMANCE (KPI)\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
+      csvContent += `Indicateur;Valeur;Unité\n`;
+      csvContent += `Nombre total de ventes;${totalSales};transactions\n`;
+      csvContent += `Chiffre d'affaires (CA);${totalRevenue.toFixed(0)};${currencySymbol}\n`;
+      csvContent += `Ticket moyen;${avgSale.toFixed(0)};${currencySymbol}\n`;
+      csvContent += `Articles vendus;${totalItems};unités\n`;
+      csvContent += `CA moyen par jour;${((totalRevenue / 30) || 0).toFixed(0)};${currencySymbol}\n`;
+      csvContent += '\n\n';
+      
+      // ═══════════════════════════════════════════════════════════════
+      // TABLEAU 2: TOP 10 DES MEILLEURES VENTES
+      // ═══════════════════════════════════════════════════════════════
+      csvContent += '🏆 TABLEAU 2: TOP 10 DES MEILLEURES VENTES\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
+      csvContent += `Rang;Produit;Quantité;Revenu (${currencySymbol});% du CA\n`;
+      
+      topProductsData.slice(0, 10).forEach((p, index) => {
+        const percentCA = totalRevenue > 0 ? ((p.revenue / totalRevenue) * 100).toFixed(1) : 0;
+        csvContent += `${index + 1};${p.name};${p.quantity};${(p.revenue || 0).toFixed(0)};${percentCA}%\n`;
+      });
+      csvContent += '\n\n';
+      
+      // ═══════════════════════════════════════════════════════════════
+      // TABLEAU 3: PRODUITS À FAIBLE ROTATION
+      // ═══════════════════════════════════════════════════════════════
+      csvContent += '⚠️  TABLEAU 3: PRODUITS À FAIBLE ROTATION (ACTION REQUISE)\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
+      csvContent += `Rang;Produit;Quantité vendue;Revenu (${currencySymbol});Statut\n`;
+      
+      worstProductsData.slice(0, 10).forEach((p, index) => {
+        const status = p.quantity === 0 ? 'NON VENDU' : 'FAIBLE ROTATION';
+        csvContent += `${index + 1};${p.name};${p.quantity || 0};${(p.revenue || 0).toFixed(0)};${status}\n`;
+      });
+      csvContent += '\n\n';
+      
+      // ═══════════════════════════════════════════════════════════════
+      // RECOMMANDATIONS PROFESSIONNELLES
+      // ═══════════════════════════════════════════════════════════════
+      csvContent += '💡 RECOMMANDATIONS STRATÉGIQUES\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
+      
+      if (bestProduct) {
+        csvContent += `✓ POINT FORT: Le produit "${bestProduct.name}" démontre une excellente performance.\n`;
+        csvContent += `  → Recommandation: Maintenir un stock suffisant et envisager des promotions complémentaires.\n\n`;
+      }
+      
+      const nonVendus = worstProductsData.filter(p => p.quantity === 0);
+      if (nonVendus.length > 0) {
+        csvContent += `⚠ ATTENTION: ${nonVendus.length} produit${nonVendus.length > 1 ? 's' : ''} n'ont enregistré aucune vente.\n`;
+        csvContent += `  → Recommandation: Analyser les causes (prix, visibilité, demande) et ajuster la stratégie.\n\n`;
+      }
+      
+      if (totalSales > 0) {
+        csvContent += `✓ PERFORMANCE GLOBALE: ${totalSales} ventes réalisées avec succès.\n`;
+        csvContent += `  → Recommandation: Continuer sur cette lancée et optimiser le ticket moyen.\n\n`;
+      }
+      
+      csvContent += '\n';
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
+      csvContent += '                    FIN DU RAPPORT PROFESSIONNEL\n';
+      csvContent += `                  Généré le ${new Date().toLocaleString('fr-FR')}\n`;
+      csvContent += `                    © ${new Date().getFullYear()} - Tous droits réservés\n`;
+      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
+      
+      // Télécharger le fichier
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.download = `rapport-professionnel-${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Nettoyer
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      // Afficher un message de succès
+      Swal.fire({
+        icon: 'success',
+        title: 'Rapport exporté !',
+        html: `
+          <div class="text-left">
+            <p class="font-bold mb-3">📊 Résumé du rapport :</p>
+            <ul class="list-disc list-inside space-y-1">
+              <li>${totalSales} vente${totalSales > 1 ? 's' : ''} enregistrée${totalSales > 1 ? 's' : ''}</li>
+              <li>${totalRevenue.toFixed(0)} ${currencySymbol} de chiffre d'affaires</li>
+              <li>${totalItems} article${totalItems > 1 ? 's' : ''} vendu${totalItems > 1 ? 's' : ''}</li>
+            </ul>
+            <p class="mt-4 text-sm text-gray-600">📁 Fichier: <strong>rapport-professionnel-${dateStr}.csv</strong></p>
+          </div>
+        `,
+        confirmButtonText: 'OK'
+      });
+      
+    } catch (error) {
+      console.error('Erreur export:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur d\'export',
+        text: 'Une erreur est survenue lors de la génération du rapport.',
+        confirmButtonText: 'OK'
+      });
+    }
+  }
+
+  // Définir les dates par défaut (dernier mois)
+  const today = new Date();
+  const lastMonth = new Date(today);
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  
+  document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+  document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+  // Charger au démarrage
+  loadReports();
+</script>
+
+<%- include('partials/footer') %>

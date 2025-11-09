@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Direct POS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8">
+    <h1 class="text-2xl font-bold mb-4">Test Direct - Chargement Produits</h1>
+    
+    <button onclick="testLogin()" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">
+        1. Test Login
+    </button>
+    
+    <button onclick="testProducts()" class="bg-green-500 text-white px-4 py-2 rounded mb-4 ml-2">
+        2. Test Produits
+    </button>
+    
+    <button onclick="clearAll()" class="bg-red-500 text-white px-4 py-2 rounded mb-4 ml-2">
+        Effacer tout
+    </button>
+    
+    <div id="result" class="bg-gray-100 p-4 rounded"></div>
+    
+    <script>
+        function log(msg) {
+            document.getElementById('result').innerHTML += `<p>${msg}</p>`;
+        }
+        
+        function clearAll() {
+            localStorage.clear();
+            document.getElementById('result').innerHTML = '<p class="text-green-600">✅ LocalStorage effacé</p>';
+        }
+        
+        async function testLogin() {
+            document.getElementById('result').innerHTML = '';
+            log('🔄 Test de connexion...');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                log(`Status: ${response.status}`);
+                log(`Réponse: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.sessionId) {
+                    localStorage.setItem('sessionId', data.sessionId);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    log('✅ SessionId sauvegardé: ' + data.sessionId.substring(0, 20) + '...');
+                } else {
+                    log('❌ Pas de sessionId dans la réponse');
+                }
+            } catch (error) {
+                log('❌ Erreur: ' + error.message);
+            }
+        }
+        
+        async function testProducts() {
+            document.getElementById('result').innerHTML = '';
+            
+            const sessionId = localStorage.getItem('sessionId');
+            log('SessionId: ' + (sessionId ? sessionId.substring(0, 20) + '...' : '❌ MANQUANT'));
+            
+            if (!sessionId) {
+                log('⚠️ Faites d\'abord le Test Login !');
+                return;
+            }
+            
+            log('🔄 Chargement des produits...');
+            
+            try {
+                const response = await fetch('/api/products', {
+                    headers: {
+                        'X-Session-Id': sessionId
+                    }
+                });
+                
+                log(`Status: ${response.status}`);
+                
+                const data = await response.json();
+                log(`Réponse: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.products) {
+                    log(`✅ ${data.products.length} produits trouvés`);
+                    data.products.forEach(p => {
+                        log(`- ${p.name}: ${p.price} FC (Stock: ${p.stock})`);
+                    });
+                } else {
+                    log('❌ Pas de produits');
+                }
+            } catch (error) {
+                log('❌ Erreur: ' + error.message);
+            }
+        }
+        
+        // Auto-test au chargement
+        window.onload = function() {
+            const sessionId = localStorage.getItem('sessionId');
+            if (sessionId) {
+                log('ℹ️ Session trouvée: ' + sessionId.substring(0, 20) + '...');
+                log('👉 Cliquez sur "Test Produits" pour vérifier');
+            } else {
+                log('ℹ️ Pas de session');
+                log('👉 Cliquez sur "Test Login" d\'abord');
+            }
+        };
+    </script>
+</body>
+</html>
