@@ -14,8 +14,10 @@
   <div class="bg-white rounded-lg shadow-md p-4 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <input type="text" id="searchInput" placeholder="Rechercher un produit..." 
-        class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
-      <select id="categoryFilter" class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+        class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+        onkeyup="if(event.key === 'Enter') loadProducts()">
+      <select id="categoryFilter" class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+        onchange="loadProducts()">
         <option value="">Toutes les catégories</option>
       </select>
       <button onclick="loadProducts()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
@@ -209,11 +211,11 @@
         </td>
         <td class="px-6 py-4 text-sm">${p.barcode || '-'}</td>
         <td class="px-6 py-4">
-          <button onclick="editProduct(${p.id})" class="text-blue-600 hover:text-blue-800 mr-3" title="Modifier">
+          <button onclick="editProduct('${p._id}')" class="text-blue-600 hover:text-blue-800 mr-3" title="Modifier">
             <i class="fas fa-edit"></i>
           </button>
           ${isAdmin ? `
-          <button onclick="deleteProduct(${p.id})" class="text-red-600 hover:text-red-800" title="Supprimer">
+          <button onclick="deleteProduct('${p._id}')" class="text-red-600 hover:text-red-800" title="Supprimer">
             <i class="fas fa-trash"></i>
           </button>
           ` : `
@@ -228,16 +230,20 @@
 
   // Charger les catégories
   async function loadCategories() {
-    const response = await fetch('/api/products/meta/categories');
-    const data = await response.json();
-    
-    const select = document.getElementById('categoryFilter');
-    data.categories.forEach(cat => {
-      if (!select.querySelector(`option[value="${cat}"]`)) {
-        const option = new Option(cat, cat);
-        select.add(option);
-      }
-    });
+    try {
+      const response = await apiRequest('/api/products/meta/categories');
+      const data = await response.json();
+      
+      const select = document.getElementById('categoryFilter');
+      data.categories.forEach(cat => {
+        if (!select.querySelector(`option[value="${cat}"]`)) {
+          const option = new Option(cat, cat);
+          select.add(option);
+        }
+      });
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+    }
   }
 
   // Ouvrir modal ajout
@@ -251,10 +257,10 @@
   // Éditer un produit
   async function editProduct(id) {
     editingId = id;
-    const product = products.find(p => p.id === id);
+    const product = products.find(p => p._id === id);
     
     document.getElementById('modalTitle').textContent = 'Modifier le Produit';
-    document.getElementById('productId').value = product.id;
+    document.getElementById('productId').value = product._id;
     document.getElementById('productName').value = product.name;
     document.getElementById('productDescription').value = product.description || '';
     document.getElementById('productPrice').value = product.price;

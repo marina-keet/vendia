@@ -66,140 +66,163 @@
   }
 </style>
 
-<div class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-gray-800 mb-6">
-    <i class="fas fa-cash-register text-blue-600 mr-2"></i>Point de Vente
-  </h1>
+<div class="h-screen flex flex-col overflow-hidden bg-gray-100">
+  <!-- En-tête fixe -->
+  <div class="bg-blue-600 text-white px-6 py-3 shadow-lg flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold flex items-center">
+        <i class="fas fa-cash-register mr-3"></i>Point de Vente
+      </h1>
+      <div class="flex items-center space-x-4">
+        <!-- Sélecteur de devise -->
+        <div class="flex items-center space-x-2 bg-blue-700 rounded-lg p-1">
+          <button onclick="setCurrency('FC')" id="btnFC" 
+            class="px-4 py-1.5 rounded-md font-bold transition currency-btn currency-active text-sm">
+            FC
+          </button>
+          <button onclick="setCurrency('USD')" id="btnUSD" 
+            class="px-4 py-1.5 rounded-md font-bold transition currency-btn text-sm">
+            USD
+          </button>
+        </div>
+        <div class="text-right">
+          <div class="text-xs opacity-75">Caissier</div>
+          <div class="font-bold" id="cashierName">Chargement...</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Produits disponibles -->
-    <div class="lg:col-span-2">
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="mb-4">
-          <div class="relative">
-            <input type="text" id="productSearch" placeholder="🔍 Rechercher ou scanner un produit..." 
-              oninput="filterProducts()"
-              class="w-full border-2 border-gray-300 rounded-xl px-5 py-4 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
-              <i class="fas fa-search text-gray-400"></i>
-            </div>
+  <!-- Corps principal avec split 65/35 -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Zone produits - 65% GAUCHE -->
+    <div class="w-[65%] flex flex-col bg-white border-r-4 border-gray-200">
+      <!-- Barre de recherche -->
+      <div class="p-4 border-b-2 border-gray-200 flex-shrink-0">
+        <div class="relative">
+          <input type="text" id="productSearch" placeholder="🔍 Scanner ou rechercher un produit (Nom, Code-barres)..." 
+            oninput="filterProducts()"
+            class="w-full border-2 border-blue-500 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm font-medium"
+            autofocus>
+          <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
+            <i class="fas fa-barcode text-blue-500 text-xl"></i>
           </div>
         </div>
+      </div>
 
-        <div id="productsGrid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[600px] overflow-y-auto pr-2">
-          <div class="text-center text-gray-500 col-span-full py-8">
-            <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
-            <p>Chargement des produits...</p>
+      <!-- Grille de produits scrollable -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <div id="productsGrid" class="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2.5">
+          <div class="text-center text-gray-500 col-span-full py-12">
+            <i class="fas fa-spinner fa-spin text-4xl mb-4 text-blue-600"></i>
+            <p class="text-lg">Chargement des produits...</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Panier -->
-    <div class="lg:col-span-1">
-      <div class="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg p-5 sticky top-4 border-2 border-blue-100">
-        <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-blue-200">
+    <!-- Zone panier - 35% DROITE -->
+    <div class="w-[35%] flex flex-col bg-gradient-to-br from-gray-50 to-blue-50">
+      <!-- En-tête panier -->
+      <div class="bg-white border-b-2 border-blue-200 p-4 flex-shrink-0">
+        <div class="flex justify-between items-center">
           <div>
             <h2 class="text-xl font-bold text-gray-800 flex items-center">
               <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>
               Panier
             </h2>
-            <span id="cartCount" class="text-xs text-gray-500 font-medium">(0 article)</span>
+            <span id="cartCount" class="text-sm text-gray-500 font-medium">(0 article)</span>
           </div>
-          <button onclick="clearCart()" class="text-sm text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition font-semibold">
+          <button onclick="clearCart()" class="bg-red-100 text-red-600 hover:bg-red-200 px-4 py-2 rounded-lg transition font-semibold text-sm">
             <i class="fas fa-trash mr-1"></i>Vider
           </button>
         </div>
+      </div>
 
-        <!-- Sélecteur de devise -->
-        <div class="mb-4 flex items-center justify-center space-x-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-1 shadow-inner">
-          <button onclick="setCurrency('FC')" id="btnFC" 
-            class="flex-1 py-2 px-4 rounded-lg font-bold transition currency-btn currency-active">
-            FC
-          </button>
-          <button onclick="setCurrency('USD')" id="btnUSD" 
-            class="flex-1 py-2 px-4 rounded-lg font-bold transition currency-btn">
-            USD
-          </button>
-        </div>
-
-        <div id="cartItems" class="space-y-0 mb-4 max-h-96 overflow-y-auto rounded-lg">
-          <div class="text-center py-8 text-gray-400">
-            <i class="fas fa-shopping-cart text-5xl mb-3"></i>
-            <p class="text-sm">Panier vide</p>
+      <!-- Liste articles panier -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <div id="cartItems" class="space-y-2">
+          <div class="text-center py-12 text-gray-400">
+            <i class="fas fa-shopping-cart text-6xl mb-4"></i>
+            <p class="text-base">Panier vide</p>
+            <p class="text-sm">Scannez ou sélectionnez des produits</p>
           </div>
         </div>
+      </div>
 
-        <div class="border-t-2 border-blue-200 pt-4 space-y-2 bg-white rounded-lg p-3 shadow-inner">
-          <div class="flex justify-between text-base">
+      <!-- Zone totaux et paiement -->
+      <div class="flex-shrink-0 bg-white border-t-4 border-blue-200 p-4 space-y-3">
+        <!-- Totaux -->
+        <div class="space-y-2 pb-3 border-b-2 border-gray-200">
+          <div class="flex justify-between text-lg">
             <span class="text-gray-600">Sous-total:</span>
             <span id="subtotal" class="font-bold text-gray-800">0 FC</span>
           </div>
-
           <div class="flex justify-between items-center">
-            <span>Remise:</span>
+            <span class="text-gray-600">Remise:</span>
             <input type="number" id="discount" value="0" min="0" 
-              class="w-24 border rounded px-2 py-1 text-right"
+              class="w-28 border-2 rounded-lg px-3 py-1.5 text-right font-bold focus:ring-2 focus:ring-blue-500"
               onchange="updateTotal()">
           </div>
+        </div>
 
-          <div class="flex justify-between text-xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-3 shadow-lg mt-3">
-            <span>TOTAL:</span>
-            <span id="total">0 FC</span>
+        <!-- Total principal -->
+        <div class="flex justify-between text-2xl font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 shadow-lg">
+          <span>TOTAL:</span>
+          <span id="total">0 FC</span>
+        </div>
+        
+        <div class="flex justify-between text-sm text-gray-500">
+          <span>Équivalent:</span>
+          <span id="totalSecondary" class="font-medium">0 $</span>
+        </div>
+
+        <!-- Argent reçu -->
+        <div class="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl border-2 border-green-300">
+          <div class="flex justify-between items-center mb-2">
+            <label class="font-bold text-gray-700 text-sm">
+              <i class="fas fa-money-bill-wave text-green-600 mr-2"></i>Argent reçu:
+            </label>
+            <input type="number" id="cashReceived" value="0" min="0" step="0.01"
+              class="w-36 border-2 border-green-400 rounded-lg px-3 py-2 text-right font-bold text-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
+              oninput="calculateChange()"
+              placeholder="0">
           </div>
-          
-          <!-- Affichage devise secondaire -->
-          <div class="flex justify-between text-xs text-gray-500 mt-1">
-            <span>Équivalent:</span>
-            <span id="totalSecondary">0 $</span>
-          </div>
 
-          <!-- Argent reçu et monnaie à rendre -->
-          <div class="mt-4 space-y-3 bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200">
-            <div class="flex justify-between items-center">
-              <label class="font-bold text-gray-700">
-                <i class="fas fa-money-bill-wave text-green-600 mr-2"></i>Argent reçu:
-              </label>
-              <input type="number" id="cashReceived" value="0" min="0" step="0.01"
-                class="w-32 border-2 border-green-300 rounded-lg px-3 py-2 text-right font-bold text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                oninput="calculateChange()"
-                placeholder="0">
-            </div>
-
-            <div id="changeDisplay" class="hidden">
-              <div class="flex justify-between text-lg font-bold p-3 rounded-lg" id="changeContainer">
-                <span>
-                  <i class="fas fa-hand-holding-usd mr-2"></i>Monnaie à rendre:
-                </span>
-                <span id="changeAmount">0 FC</span>
-              </div>
+          <div id="changeDisplay" class="hidden mt-3 pt-3 border-t-2 border-green-300">
+            <div class="flex justify-between text-lg font-bold" id="changeContainer">
+              <span class="text-gray-700">
+                <i class="fas fa-hand-holding-usd mr-2 text-green-600"></i>Monnaie:
+              </span>
+              <span id="changeAmount" class="text-green-700">0 FC</span>
             </div>
           </div>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <!-- Client et méthode de paiement -->
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">
-              <i class="fas fa-user mr-1 text-blue-600"></i>Client (optionnel)
+            <label class="block text-xs font-bold text-gray-700 mb-1">
+              <i class="fas fa-user mr-1 text-blue-600"></i>Client
             </label>
-            <select id="customerId" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
-              <option value="">-- Vente sans client --</option>
+            <select id="customerId" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">Sans client</option>
             </select>
           </div>
-
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">
-              <i class="fas fa-credit-card mr-1 text-blue-600"></i>Méthode de paiement
+            <label class="block text-xs font-bold text-gray-700 mb-1">
+              <i class="fas fa-credit-card mr-1 text-blue-600"></i>Paiement
             </label>
-            <select id="paymentMethod" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+            <select id="paymentMethod" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 bg-white">
               <option value="cash">💵 Espèces</option>
             </select>
           </div>
         </div>
 
+        <!-- Bouton validation -->
         <button onclick="completeSale()" 
-          class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl mt-6 hover:from-green-700 hover:to-green-800 transition text-lg font-bold shadow-lg transform hover:scale-105">
-          <i class="fas fa-check-circle mr-2"></i>Valider la vente
+          class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl hover:from-green-700 hover:to-green-800 transition text-xl font-bold shadow-lg transform hover:scale-[1.02] active:scale-[0.98]">
+          <i class="fas fa-check-circle mr-2"></i>VALIDER LA VENTE
         </button>
       </div>
     </div>
@@ -304,7 +327,7 @@
   async function loadProducts() {
     try {
       console.log('🔄 Chargement des produits POS...');
-      const response = await fetch('/api/products/pos-list');
+      const response = await apiRequest('/api/products/pos-list');
       const data = await response.json();
       console.log('📦 Données reçues:', data);
       
@@ -454,44 +477,38 @@
       
       return `
       <div onclick="addToCart('${productId}')" 
-        class="relative border-2 ${stockBgClass} rounded-lg p-2 hover:shadow-xl hover:scale-105 cursor-pointer transition-all duration-200 ${p.stock === 0 ? 'opacity-60' : ''} ${cardAnimation}">
+        class="relative border-2 ${stockBgClass} rounded-lg p-3 hover:shadow-lg hover:scale-[1.02] cursor-pointer transition-all duration-150 ${p.stock === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${cardAnimation} flex flex-col h-full">
         
         ${stockChangeHtml}
         
-        <!-- Badge Prix -->
-        <div class="absolute top-1 right-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-md">
+        <!-- Badge Prix en haut à droite -->
+        <div class="absolute top-1 right-1 bg-blue-600 text-white px-2 py-1 rounded-md text-xs font-bold shadow">
           ${formatCurrency(priceInCurrentCurrency)}
         </div>
         
-        <!-- Icône Produit -->
-        <div class="text-center mb-2">
-          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl w-12 h-12 flex items-center justify-center mx-auto mb-2 shadow-md">
-            <i class="fas fa-box-open text-xl text-white"></i>
+        <!-- Icône Produit centré -->
+        <div class="flex-1 flex items-center justify-center py-2">
+          <div class="bg-blue-100 rounded-lg w-14 h-14 flex items-center justify-center">
+            <i class="fas fa-box text-2xl text-blue-600"></i>
           </div>
-          
-          <!-- Nom du produit -->
-          <h3 class="font-bold text-gray-800 text-xs mb-1 line-clamp-2 min-h-[2rem]">${p.name}</h3>
-          
-          <!-- Catégorie si disponible -->
-          ${p.category ? `<div class="text-[10px] text-gray-500 mb-1"><i class="fas fa-tag mr-1"></i>${p.category}</div>` : ''}
-          
-          <!-- Badge Stock avec animation si changement -->
-          <div class="flex items-center justify-center space-x-1 ${stockTextClass} text-[10px] font-medium ${stockChange && stockChange.changed ? 'stock-pulse' : ''}">
-            <i class="fas ${stockIcon} text-xs"></i>
-            <span>${stockStatus}: <strong class="text-sm">${p.stock}</strong></span>
-          </div>
-          ${stockChange && stockChange.changed ? `
-            <div class="text-[9px] text-gray-500 mt-0.5">
-              (était: ${stockChange.old})
-            </div>
-          ` : ''}
         </div>
         
-        <!-- Bouton Ajouter -->
-        <div class="mt-2 pt-2 border-t ${p.stock === 0 ? 'border-red-200' : 'border-gray-200'}">
-          <div class="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-1.5 rounded-md text-xs font-bold hover:from-green-600 hover:to-green-700 transition shadow-md">
-            <i class="fas fa-plus-circle mr-1"></i>Ajouter
+        <!-- Nom du produit -->
+        <div class="text-center mb-2">
+          <h3 class="font-bold text-gray-800 text-sm leading-tight line-clamp-2 min-h-[2.5rem]">${p.name}</h3>
+        </div>
+        
+        <!-- Badge Stock en bas -->
+        <div class="text-center pb-1">
+          <div class="inline-flex items-center space-x-1 ${stockTextClass} text-xs font-semibold px-2 py-1 rounded ${stockBgClass} ${stockChange && stockChange.changed ? 'stock-pulse' : ''}">
+            <i class="fas ${stockIcon} text-xs"></i>
+            <span>${p.stock}</span>
           </div>
+          ${stockChange && stockChange.changed ? `
+            <div class="text-xs text-gray-400 mt-0.5">
+              (${stockChange.old})
+            </div>
+          ` : ''}
         </div>
       </div>
     `}).join('');
@@ -547,9 +564,10 @@
     
     if (cart.length === 0) {
       container.innerHTML = `
-        <div class="text-center py-8 text-gray-400">
-          <i class="fas fa-shopping-cart text-5xl mb-3"></i>
-          <p class="text-sm">Panier vide</p>
+        <div class="text-center py-12 text-gray-400">
+          <i class="fas fa-shopping-cart text-6xl mb-4"></i>
+          <p class="text-base">Panier vide</p>
+          <p class="text-sm">Scannez ou sélectionnez des produits</p>
         </div>
       `;
       return;
@@ -563,20 +581,10 @@
       const subtotal = priceInCurrentCurrency * item.quantity;
       
       return `
-      <div class="bg-gradient-to-br from-white to-gray-50 p-3 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition mb-2">
-        <div class="flex justify-between items-start mb-2">
-          <div class="flex-1">
-            <div class="font-bold text-gray-800 text-sm">${item.productName}</div>
-            <div class="text-xs text-gray-500 mt-0.5">${formatCurrency(priceInCurrentCurrency)} / unité</div>
-          </div>
-          <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-1">
-            <i class="fas fa-trash text-sm"></i>
-          </button>
-        </div>
-        
-        <div class="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-200">
-          <div class="flex items-center space-x-2">
-            <span class="text-xs text-gray-600 font-medium">Qté:</span>
+      <div class="bg-white p-2.5 rounded-lg shadow-sm border border-gray-200 hover:border-blue-300 transition">
+        <div class="flex items-center gap-3">
+          <!-- Quantité avec contrôles -->
+          <div class="flex flex-col items-center bg-gray-50 rounded-lg px-2 py-1 border border-gray-200">
             <input 
               type="number" 
               value="${item.quantity}" 
@@ -584,13 +592,26 @@
               max="999"
               onchange="setQuantity(${index}, this.value)"
               onclick="event.stopPropagation()"
-              class="w-16 px-2 py-1 text-center border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-sm"
+              class="w-14 text-center border-0 bg-transparent font-bold text-base focus:ring-0 p-0"
             >
+            <div class="text-xs text-gray-400 font-medium">qté</div>
           </div>
+          
+          <!-- Infos produit -->
+          <div class="flex-1 min-w-0">
+            <div class="font-bold text-gray-800 text-sm truncate">${item.productName}</div>
+            <div class="text-xs text-gray-500">${formatCurrency(priceInCurrentCurrency)}/u</div>
+          </div>
+          
+          <!-- Prix total -->
           <div class="text-right">
-            <div class="text-xs text-gray-500">Total</div>
-            <div class="font-bold text-blue-600">${formatCurrency(subtotal)}</div>
+            <div class="font-bold text-blue-600 text-sm">${formatCurrency(subtotal)}</div>
           </div>
+          
+          <!-- Bouton supprimer -->
+          <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full p-1.5 transition">
+            <i class="fas fa-times text-sm"></i>
+          </button>
         </div>
       </div>
     `}).join('');
@@ -1151,9 +1172,26 @@
     }
   });
 
-  // Charger au démarrage
-  (async function init() {
+  // Charger au démarrage - attendre que le DOM soit prêt
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  
+  async function init() {
     try {
+      console.log('🚀 Démarrage initialisation POS...');
+      console.log('📍 apiRequest disponible:', typeof window.apiRequest);
+      console.log('📍 productsGrid existe:', !!document.getElementById('productsGrid'));
+      
+      // Charger le nom du caissier depuis le header
+      const userElement = document.querySelector('[data-user-name]');
+      if (userElement) {
+        const userName = userElement.getAttribute('data-user-name');
+        document.getElementById('cashierName').textContent = userName;
+      }
+      
       await loadCurrencySettings();
       await loadProducts();
       await loadCustomers();
@@ -1162,7 +1200,7 @@
       console.error('❌ Erreur initialisation POS:', error);
       alert('Erreur lors du chargement du POS. Veuillez actualiser la page.');
     }
-  })();
+  }
 </script>
 
 <%- include('partials/footer') %>

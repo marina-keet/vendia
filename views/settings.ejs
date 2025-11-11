@@ -88,6 +88,13 @@
           <label class="block text-sm font-medium text-gray-700 mb-2">Numéro d'identification fiscale</label>
           <input type="text" id="business_tax_id" class="w-full border rounded-lg px-4 py-2">
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-user-tie text-blue-600 mr-2"></i>Nom du Gérant
+          </label>
+          <input type="text" id="manager_name" placeholder="Nom complet du gérant" class="w-full border rounded-lg px-4 py-2">
+          <p class="text-sm text-gray-500 mt-1">Ce nom apparaîtra sur les rapports professionnels</p>
+        </div>
       </div>
     </div>
 
@@ -246,25 +253,55 @@
 
   async function loadSettings() {
     const response = await apiRequest('/api/settings');
-    settings = await response.json();
+    const data = await response.json();
     
-    // Remplir les champs
-    settings.forEach(s => {
-      const field = document.getElementById(s.key);
-      if (field) {
-        if (field.type === 'checkbox') {
-          field.checked = s.value === 'true' || s.value === true;
-        } else {
-          field.value = s.value;
+    // Supporter les deux formats : ancien (array) et nouveau (objet MongoDB)
+    if (Array.isArray(data)) {
+      settings = data;
+      // Remplir les champs (ancien format)
+      settings.forEach(s => {
+        const field = document.getElementById(s.key);
+        if (field) {
+          if (field.type === 'checkbox') {
+            field.checked = s.value === 'true' || s.value === true;
+          } else {
+            field.value = s.value;
+          }
+        }
+
+        // Charger le logo si disponible
+        if (s.key === 'logo' && s.value) {
+          currentLogo = s.value;
+          displayLogo(s.value);
+        }
+      });
+    } else {
+      // Nouveau format (objet MongoDB)
+      settings = data;
+      
+      // Mapper les champs
+      const fieldMapping = {
+        'business_name': 'companyName',
+        'business_address': 'companyAddress',
+        'business_phone': 'companyPhone',
+        'business_email': 'companyEmail',
+        'manager_name': 'managerName',
+        'currency': 'primaryCurrency',
+        'tax_rate': 'taxRate',
+        'receipt_footer': 'receiptFooter'
+      };
+      
+      for (const [fieldId, settingKey] of Object.entries(fieldMapping)) {
+        const field = document.getElementById(fieldId);
+        if (field && settings[settingKey] !== undefined) {
+          if (field.type === 'checkbox') {
+            field.checked = settings[settingKey] === true;
+          } else {
+            field.value = settings[settingKey];
+          }
         }
       }
-
-      // Charger le logo si disponible
-      if (s.key === 'logo' && s.value) {
-        currentLogo = s.value;
-        displayLogo(s.value);
-      }
-    });
+    }
 
     toggleLoyaltySettings();
   }
@@ -378,6 +415,7 @@
       { key: 'business_phone', value: document.getElementById('business_phone').value },
       { key: 'business_email', value: document.getElementById('business_email').value },
       { key: 'business_tax_id', value: document.getElementById('business_tax_id').value },
+      { key: 'manager_name', value: document.getElementById('manager_name').value },
       
       // General
       { key: 'currency', value: document.getElementById('currency').value },
@@ -407,21 +445,49 @@
     ];
 
     try {
-      const response = await apiRequest('/api/settings/bulk-update', {
-        method: 'POST',
+      // Préparer les données au format MongoDB
+      const mongoSettings = {
+        companyName: document.getElementById('business_name').value,
+        companyAddress: document.getElementById('business_address').value,
+        companyPhone: document.getElementById('business_phone').value,
+        companyEmail: document.getElementById('business_email').value,
+        managerName: document.getElementById('manager_name').value,
+        primaryCurrency: document.getElementById('currency').value,
+        taxRate: parseFloat(document.getElementById('tax_rate').value) || 0,
+        receiptFooter: document.getElementById('receipt_footer').value
+      };
+      
+      const response = await apiRequest('/api/settings', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: settingsToSave })
+        body: JSON.stringify(mongoSettings)
       });
 
       if (response.ok) {
-        alert('Paramètres enregistrés avec succès!');
+        const result = await response.json();
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès !',
+          text: 'Paramètres enregistrés avec succès',
+          confirmButtonText: 'OK'
+        });
         loadSettings(); // Recharger pour confirmer
       } else {
         const error = await response.json();
-        alert('Erreur: ' + error.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: error.message || 'Erreur lors de l\'enregistrement',
+          confirmButtonText: 'OK'
+        });
       }
     } catch (error) {
-      alert('Erreur lors de l\'enregistrement: ' + error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de l\'enregistrement: ' + error.message,
+        confirmButtonText: 'OK'
+      });
     }
   }
 

@@ -600,196 +600,58 @@
     return labels[method] || method;
   }
 
-  // Exporter le rapport complet
+  // Exporter le rapport complet en PDF
   async function exportReport() {
     try {
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
       
-      // Récupérer toutes les données
-      const topProductsResponse = await fetch(`/api/reports/top-products?limit=50`);
-      const topProductsData = await topProductsResponse.json();
+      // Construire l'URL avec les paramètres
+      let url = '/api/pdf-report/generate-pdf?';
+      if (startDate) url += `startDate=${startDate}&`;
+      if (endDate) url += `endDate=${endDate}&`;
       
-      const worstProductsResponse = await fetch(`/api/reports/worst-products?limit=50`);
-      const worstProductsData = await worstProductsResponse.json();
-      
-      const statsResponse = await fetch(`/api/reports/stats${startDate || endDate ? '?' : ''}${startDate ? 'startDate=' + startDate : ''}${endDate ? (startDate ? '&' : '') + 'endDate=' + endDate : ''}`);
-      const statsData = await statsResponse.json();
-      
-      // Calculer les statistiques
-      const totalSales = statsData.totalSales || 0;
-      const totalRevenue = statsData.totalRevenue || 0;
-      const avgSale = statsData.averageOrderValue || 0;
-      const totalItems = topProductsData.reduce((sum, p) => sum + (p.quantity || 0), 0);
-      
-      // Déterminer la période pour le message
-      const startDateObj = startDate ? new Date(startDate) : null;
-      const endDateObj = endDate ? new Date(endDate) : new Date();
-      
-      let periodeMessage = '';
-      if (startDate && endDate) {
-        const startMonth = startDateObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-        const endMonth = endDateObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-        if (startMonth === endMonth) {
-          periodeMessage = `Durant le mois de ${startMonth}`;
-        } else {
-          periodeMessage = `Durant la période du ${startDateObj.toLocaleDateString('fr-FR')} au ${endDateObj.toLocaleDateString('fr-FR')}`;
+      // Afficher un message de chargement
+      Swal.fire({
+        title: 'Génération du rapport PDF...',
+        html: 'Veuillez patienter',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
         }
-      } else if (startDate) {
-        periodeMessage = `À partir du ${startDateObj.toLocaleDateString('fr-FR')}`;
-      } else if (endDate) {
-        periodeMessage = `Jusqu'au ${endDateObj.toLocaleDateString('fr-FR')}`;
-      } else {
-        periodeMessage = `Sur toute la période d'activité`;
-      }
-      
-      // Trouver le produit le plus vendu
-      const bestProduct = topProductsData.length > 0 ? topProductsData[0] : null;
-      const worstProduct = worstProductsData.length > 0 ? worstProductsData[0] : null;
-      
-      // Créer le rapport professionnel
-      let csvContent = '';
-      
-      // ═══════════════════════════════════════════════════════════════
-      // EN-TÊTE DU RAPPORT
-      // ═══════════════════════════════════════════════════════════════
-      csvContent += '╔═══════════════════════════════════════════════════════════════════════╗\n';
-      csvContent += '║                    RAPPORT DE VENTES PROFESSIONNEL                    ║\n';
-      csvContent += '║                         SYSTÈME DE GESTION POS                        ║\n';
-      csvContent += '╚═══════════════════════════════════════════════════════════════════════╝\n\n';
-      
-      csvContent += `📅 Date de génération: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} à ${new Date().toLocaleTimeString('fr-FR')}\n`;
-      csvContent += `📊 Période analysée: ${startDate || 'Début'} → ${endDate || "Aujourd'hui"}\n`;
-      csvContent += '\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
-      
-      // ═══════════════════════════════════════════════════════════════
-      // MESSAGE PROFESSIONNEL RÉCAPITULATIF
-      // ═══════════════════════════════════════════════════════════════
-      csvContent += '📝 RÉSUMÉ EXÉCUTIF\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
-      
-      csvContent += `${periodeMessage}, notre entreprise a réalisé ${totalSales} vente${totalSales > 1 ? 's' : ''} `;
-      csvContent += `pour un chiffre d'affaires total de ${totalRevenue.toFixed(0)} ${currencySymbol}. `;
-      
-      if (totalSales > 0) {
-        csvContent += `\n\nCela représente une vente moyenne de ${avgSale.toFixed(0)} ${currencySymbol} par transaction. `;
-        csvContent += `Au total, ${totalItems} article${totalItems > 1 ? 's ont' : ' a'} été vendu${totalItems > 1 ? 's' : ''}. `;
-        
-        if (bestProduct) {
-          csvContent += `\n\nLe produit phare de cette période est "${bestProduct.name}" avec ${bestProduct.quantity} unité${bestProduct.quantity > 1 ? 's' : ''} vendue${bestProduct.quantity > 1 ? 's' : ''}, `;
-          csvContent += `générant un revenu de ${(bestProduct.revenue || 0).toFixed(0)} ${currencySymbol}. `;
-        }
-        
-        if (worstProduct && worstProduct.quantity === 0) {
-          csvContent += `\n\nÀ noter que certains produits comme "${worstProduct.name}" n'ont enregistré aucune vente durant cette période, `;
-          csvContent += `ce qui pourrait nécessiter une révision de la stratégie commerciale ou du stock.`;
-        }
-      } else {
-        csvContent += `\n\nAucune vente n'a été enregistrée durant cette période.`;
-      }
-      
-      csvContent += '\n\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
-      
-      // ═══════════════════════════════════════════════════════════════
-      // TABLEAU 1: INDICATEURS CLÉS DE PERFORMANCE
-      // ═══════════════════════════════════════════════════════════════
-      csvContent += '📊 TABLEAU 1: INDICATEURS CLÉS DE PERFORMANCE (KPI)\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
-      csvContent += `Indicateur;Valeur;Unité\n`;
-      csvContent += `Nombre total de ventes;${totalSales};transactions\n`;
-      csvContent += `Chiffre d'affaires (CA);${totalRevenue.toFixed(0)};${currencySymbol}\n`;
-      csvContent += `Ticket moyen;${avgSale.toFixed(0)};${currencySymbol}\n`;
-      csvContent += `Articles vendus;${totalItems};unités\n`;
-      csvContent += `CA moyen par jour;${((totalRevenue / 30) || 0).toFixed(0)};${currencySymbol}\n`;
-      csvContent += '\n\n';
-      
-      // ═══════════════════════════════════════════════════════════════
-      // TABLEAU 2: TOP 10 DES MEILLEURES VENTES
-      // ═══════════════════════════════════════════════════════════════
-      csvContent += '🏆 TABLEAU 2: TOP 10 DES MEILLEURES VENTES\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
-      csvContent += `Rang;Produit;Quantité;Revenu (${currencySymbol});% du CA\n`;
-      
-      topProductsData.slice(0, 10).forEach((p, index) => {
-        const percentCA = totalRevenue > 0 ? ((p.revenue / totalRevenue) * 100).toFixed(1) : 0;
-        csvContent += `${index + 1};${p.name};${p.quantity};${(p.revenue || 0).toFixed(0)};${percentCA}%\n`;
       });
-      csvContent += '\n\n';
       
-      // ═══════════════════════════════════════════════════════════════
-      // TABLEAU 3: PRODUITS À FAIBLE ROTATION
-      // ═══════════════════════════════════════════════════════════════
-      csvContent += '⚠️  TABLEAU 3: PRODUITS À FAIBLE ROTATION (ACTION REQUISE)\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
-      csvContent += `Rang;Produit;Quantité vendue;Revenu (${currencySymbol});Statut\n`;
+      // Télécharger le PDF
+      const response = await fetch(url);
       
-      worstProductsData.slice(0, 10).forEach((p, index) => {
-        const status = p.quantity === 0 ? 'NON VENDU' : 'FAIBLE ROTATION';
-        csvContent += `${index + 1};${p.name};${p.quantity || 0};${(p.revenue || 0).toFixed(0)};${status}\n`;
-      });
-      csvContent += '\n\n';
-      
-      // ═══════════════════════════════════════════════════════════════
-      // RECOMMANDATIONS PROFESSIONNELLES
-      // ═══════════════════════════════════════════════════════════════
-      csvContent += '💡 RECOMMANDATIONS STRATÉGIQUES\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n\n';
-      
-      if (bestProduct) {
-        csvContent += `✓ POINT FORT: Le produit "${bestProduct.name}" démontre une excellente performance.\n`;
-        csvContent += `  → Recommandation: Maintenir un stock suffisant et envisager des promotions complémentaires.\n\n`;
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération du PDF');
       }
       
-      const nonVendus = worstProductsData.filter(p => p.quantity === 0);
-      if (nonVendus.length > 0) {
-        csvContent += `⚠ ATTENTION: ${nonVendus.length} produit${nonVendus.length > 1 ? 's' : ''} n'ont enregistré aucune vente.\n`;
-        csvContent += `  → Recommandation: Analyser les causes (prix, visibilité, demande) et ajuster la stratégie.\n\n`;
-      }
-      
-      if (totalSales > 0) {
-        csvContent += `✓ PERFORMANCE GLOBALE: ${totalSales} ventes réalisées avec succès.\n`;
-        csvContent += `  → Recommandation: Continuer sur cette lancée et optimiser le ticket moyen.\n\n`;
-      }
-      
-      csvContent += '\n';
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
-      csvContent += '                    FIN DU RAPPORT PROFESSIONNEL\n';
-      csvContent += `                  Généré le ${new Date().toLocaleString('fr-FR')}\n`;
-      csvContent += `                    © ${new Date().getFullYear()} - Tous droits réservés\n`;
-      csvContent += '═══════════════════════════════════════════════════════════════════════\n';
-      
-      // Télécharger le fichier
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
-      a.href = url;
+      a.href = downloadUrl;
       const dateStr = new Date().toISOString().split('T')[0];
-      a.download = `rapport-professionnel-${dateStr}.csv`;
+      a.download = `rapport-${dateStr}.pdf`;
       document.body.appendChild(a);
       a.click();
       
       // Nettoyer
       setTimeout(() => {
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(downloadUrl);
       }, 100);
       
-      // Afficher un message de succès
+      // Message de succès
       Swal.fire({
         icon: 'success',
-        title: 'Rapport exporté !',
+        title: 'Rapport PDF généré !',
         html: `
           <div class="text-left">
-            <p class="font-bold mb-3">📊 Résumé du rapport :</p>
-            <ul class="list-disc list-inside space-y-1">
-              <li>${totalSales} vente${totalSales > 1 ? 's' : ''} enregistrée${totalSales > 1 ? 's' : ''}</li>
-              <li>${totalRevenue.toFixed(0)} ${currencySymbol} de chiffre d'affaires</li>
-              <li>${totalItems} article${totalItems > 1 ? 's' : ''} vendu${totalItems > 1 ? 's' : ''}</li>
-            </ul>
-            <p class="mt-4 text-sm text-gray-600">📁 Fichier: <strong>rapport-professionnel-${dateStr}.csv</strong></p>
+            <p class="font-bold mb-3">📊 Le rapport a été téléchargé avec succès</p>
+            <p class="text-sm text-gray-600">📁 Fichier: <strong>rapport-${dateStr}.pdf</strong></p>
           </div>
         `,
         confirmButtonText: 'OK'
@@ -800,7 +662,7 @@
       Swal.fire({
         icon: 'error',
         title: 'Erreur d\'export',
-        text: 'Une erreur est survenue lors de la génération du rapport.',
+        text: 'Une erreur est survenue lors de la génération du rapport PDF.',
         confirmButtonText: 'OK'
       });
     }
@@ -817,5 +679,8 @@
   // Charger au démarrage
   loadReports();
 </script>
+
+<!-- SweetAlert2 pour les notifications -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <%- include('partials/footer') %>

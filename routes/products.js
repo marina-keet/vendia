@@ -41,8 +41,18 @@ router.get('/', requireAuth, (req, res) => {
   });
 });
 
+// Récupérer les catégories - DOIT être AVANT /:id
+router.get('/meta/categories', requireAuth, (req, res) => {
+  db.all('SELECT DISTINCT category FROM products WHERE category IS NOT NULL ORDER BY category', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ categories: rows.map(r => r.category) });
+  });
+});
+
 // Récupérer un produit par ID
-router.get('/:id', (req, res) => {
+router.get('/:id', requireAuth, (req, res) => {
   db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -55,7 +65,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Créer un nouveau produit
-router.post('/', (req, res) => {
+router.post('/', requireAuth, requireRole('admin', 'manager'), (req, res) => {
   const { name, description, price, stock, category, barcode } = req.body;
 
   if (!name || !price) {
@@ -123,18 +133,8 @@ router.delete('/:id', requireAuth, requireRole('admin', 'manager'), (req, res) =
   });
 });
 
-// Récupérer les catégories
-router.get('/meta/categories', (req, res) => {
-  db.all('SELECT DISTINCT category FROM products WHERE category IS NOT NULL ORDER BY category', (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ categories: rows.map(r => r.category) });
-  });
-});
-
 // Recherche par code-barres
-router.get('/search/barcode/:barcode', (req, res) => {
+router.get('/search/barcode/:barcode', requireAuth, (req, res) => {
   db.get('SELECT * FROM products WHERE barcode = ?', [req.params.barcode], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });

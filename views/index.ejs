@@ -86,7 +86,7 @@
   // Charger les paramètres de devise
   async function loadCurrencySettings() {
     try {
-      const response = await fetch('/api/settings');
+      const response = await apiRequest('/api/settings');
       const data = await response.json();
       if (data.settings && data.settings.primary_currency) {
         currentCurrency = data.settings.primary_currency;
@@ -101,22 +101,29 @@
   async function loadStats() {
     await loadCurrencySettings(); // Charger la devise d'abord
     try {
-      const response = await fetch('/api/reports/stats');
+      const response = await apiRequest('/api/reports/stats');
       const data = await response.json();
       
-      document.getElementById('todaySales').textContent = data.stats.today.count;
-      document.getElementById('todayRevenue').textContent = data.stats.today.total.toFixed(0) + ' ' + currencySymbol;
-      document.getElementById('totalProducts').textContent = data.stats.products.count;
-      document.getElementById('lowStock').textContent = data.stats.lowStock;
+      // API retourne directement totalSales, totalRevenue, etc (pas stats.today.*)
+      document.getElementById('todaySales').textContent = data.totalSales || 0;
+      document.getElementById('todayRevenue').textContent = (data.totalRevenue || 0).toFixed(0) + ' ' + currencySymbol;
+      
+      // Charger aussi le nombre de produits
+      const productsResponse = await apiRequest('/api/products');
+      const productsData = await productsResponse.json();
+      const products = productsData.products || [];
+      
+      document.getElementById('totalProducts').textContent = products.length;
+      document.getElementById('lowStock').textContent = products.filter(p => p.stock <= 5).length;
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur chargement stats:', error);
     }
   }
 
   // Graphique des ventes
   async function loadSalesChart() {
     try {
-      const response = await fetch('/api/reports/sales-by-day?days=7');
+      const response = await apiRequest('/api/reports/sales-by-day?days=7');
       const data = await response.json();
       
       const ctx = document.getElementById('salesChart').getContext('2d');
@@ -140,30 +147,36 @@
         }
       });
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur chargement graphique ventes:', error);
     }
   }
 
   // Graphique des paiements
   async function loadPaymentChart() {
     try {
-      const response = await fetch('/api/reports/payment-methods');
+      const response = await apiRequest('/api/reports/payment-methods');
       const data = await response.json();
+      
+      // API retourne un tableau directement [{method, total, count}, ...]
+      if (!data || data.length === 0) {
+        console.log('Aucune donnée de paiement disponible');
+        return;
+      }
       
       const ctx = document.getElementById('paymentChart').getContext('2d');
       new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: data.data.map(d => {
+          labels: data.map(d => {
             const labels = {
               'cash': 'Espèces',
               'card': 'Carte',
               'mobile_money': 'Mobile Money'
             };
-            return labels[d.payment_method] || d.payment_method;
+            return labels[d.method] || d.method;
           }),
           datasets: [{
-            data: data.data.map(d => d.total),
+            data: data.map(d => d.total),
             backgroundColor: [
               'rgb(34, 197, 94)',
               'rgb(59, 130, 246)',
@@ -180,7 +193,7 @@
         }
       });
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur chargement graphique paiements:', error);
     }
   }
 

@@ -32,6 +32,10 @@ const settingsSchema = new mongoose.Schema({
     type: String,
     default: 'Merci de votre visite!'
   },
+  managerName: {
+    type: String,
+    default: 'Gérant'
+  },
   updatedAt: {
     type: Date,
     default: Date.now

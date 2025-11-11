@@ -37,6 +37,16 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
+// Récupérer les catégories - utile pour le filtrage côté client
+router.get('/meta/categories', requireAuth, async (req, res) => {
+  try {
+    const categories = await Product.distinct('category', { category: { $ne: null } });
+    res.json({ categories: categories.sort() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Récupérer un produit par ID
 router.get('/:id', async (req, res) => {
   try {

@@ -70,10 +70,9 @@
       window.location.href = '/login';
     }
 
-    // Afficher le nom de l'utilisateur
-    if (user.fullName) {
-      document.getElementById('userName').textContent = user.fullName;
-    }
+    // Afficher le nom de l'utilisateur (priorité: fullName, sinon username)
+    const displayName = user.fullName || user.username || 'Utilisateur';
+    document.getElementById('userName').textContent = displayName;
 
     // Afficher les liens admin/manager
     if (user.role === 'admin' || user.role === 'manager') {

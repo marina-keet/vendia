@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
       settings = await Settings.create({});
     }
     
-    res.json({ settings });
+    res.json(settings);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -4,10 +4,8 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/vendia
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    // Suppression des options deprecated (useNewUrlParser, useUnifiedTopology)
+    await mongoose.connect(MONGODB_URI);
     console.log('✅ MongoDB connecté avec succès!');
     
     // Initialiser les données de démonstration si la base est vide
