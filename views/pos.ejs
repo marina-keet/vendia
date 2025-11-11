@@ -309,8 +309,10 @@
     });
     document.getElementById(`btn${currency}`).classList.add('currency-active');
     
-    // Rafraîchir l'affichage
-    displayProducts(products);
+    // Rafraîchir l'affichage avec le filtre actuel
+    const searchInput = document.getElementById('productSearch');
+    const currentFilter = searchInput ? searchInput.value.toLowerCase() : '';
+    displayProducts(currentFilter);
     displayCart();
     updateTotal();
   }
