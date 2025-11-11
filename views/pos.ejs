@@ -1185,12 +1185,10 @@
       console.log('📍 apiRequest disponible:', typeof window.apiRequest);
       console.log('📍 productsGrid existe:', !!document.getElementById('productsGrid'));
       
-      // Charger le nom du caissier depuis le header
-      const userElement = document.querySelector('[data-user-name]');
-      if (userElement) {
-        const userName = userElement.getAttribute('data-user-name');
-        document.getElementById('cashierName').textContent = userName;
-      }
+      // Charger le nom du caissier depuis localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const cashierName = user.fullName || user.username || 'Invité';
+      document.getElementById('cashierName').textContent = cashierName;
       
       await loadCurrencySettings();
       await loadProducts();
