@@ -44,7 +44,7 @@ Le tableau de bord vous donne une vue d'ensemble de votre commerce :
 2. Remplir les informations :
    - **Nom** (obligatoire)
    - **Description**
-   - **Prix en FCFA** (obligatoire)
+   - **Prix en FC** (obligatoire)
    - **Stock** (obligatoire)
    - **Catégorie**
    - **Code-barres** (optionnel)
@@ -80,7 +80,7 @@ Interface simplifiée pour enregistrer rapidement les ventes :
    - Retirer un article avec l'icône **×**
 
 3. **Appliquer une remise** (optionnel) :
-   - Saisir le montant de la remise en FCFA
+   - Saisir le montant de la remise en FC
 
 4. **Choisir le mode de paiement** :
    - Espèces

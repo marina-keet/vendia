@@ -279,7 +279,7 @@ LIMIT 10;
 - Numéro d'identification fiscale
 
 #### ⚙️ Général
-- Devise (FCFA, EUR, USD, GBP)
+- Devise (FC, USD)
 - Position de la devise
 - Taux de TVA (%)
 - TVA incluse ou non

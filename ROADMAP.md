@@ -135,7 +135,7 @@
 ## 📱 Fonctionnalités Spécifiques par Région
 
 ### Afrique de l'Ouest
-- [ ] Support multi-devises (FCFA, Naira, Cedi)
+- [ ] Support multi-devises (FC, Naira, Cedi)
 - [ ] Intégrations mobiles money locales
 - [ ] Support de l'OHADA
 - [ ] Factures conformes aux réglementations locales

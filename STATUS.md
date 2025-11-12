@@ -62,7 +62,7 @@
 ├─ id (PK) ─────────────── Identifiant unique
 ├─ name ────────────────── Nom du produit
 ├─ description ─────────── Description
-├─ price ───────────────── Prix unitaire (FCFA)
+├─ price ───────────────── Prix unitaire (FC)
 ├─ stock ───────────────── Quantité disponible
 ├─ category ────────────── Catégorie
 ├─ barcode ─────────────── Code-barres

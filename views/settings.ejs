@@ -106,17 +106,15 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Devise</label>
             <select id="currency" class="w-full border rounded-lg px-4 py-2">
-              <option value="FCFA">FCFA</option>
-              <option value="EUR">Euro (€)</option>
+              <option value="FC">Franc Congolais (FC)</option>
               <option value="USD">Dollar ($)</option>
-              <option value="GBP">Livre (£)</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Position devise</label>
             <select id="currency_position" class="w-full border rounded-lg px-4 py-2">
-              <option value="after">Après le montant (1000 FCFA)</option>
-              <option value="before">Avant le montant (FCFA 1000)</option>
+              <option value="after">Après le montant (1000 FC)</option>
+              <option value="before">Avant le montant (FC 1000)</option>
             </select>
           </div>
         </div>
@@ -178,37 +176,182 @@
 
     <!-- Onglet Reçus -->
     <div id="tab-receipt" class="tab-content hidden">
-      <h2 class="text-xl font-bold mb-6">Personnalisation des Reçus</h2>
-      <div class="space-y-4">
-        <div>
+      <h2 class="text-xl font-bold mb-6">Personnalisation des Reçus et Factures</h2>
+      
+      <!-- Section Affichage -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold mb-4 text-blue-600">
+          <i class="fas fa-eye mr-2"></i>Affichage
+        </h3>
+        <div class="space-y-3 bg-gray-50 p-4 rounded-lg">
           <label class="flex items-center space-x-3">
             <input type="checkbox" id="receipt_show_logo" class="h-5 w-5 text-blue-600">
-            <span class="text-sm font-medium text-gray-700">Afficher le logo sur les reçus</span>
+            <span class="text-sm font-medium text-gray-700">Afficher le logo de l'entreprise</span>
           </label>
-        </div>
-        <div>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_company_info" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher les coordonnées complètes (adresse, téléphone, email)</span>
+          </label>
           <label class="flex items-center space-x-3">
             <input type="checkbox" id="receipt_show_tax" class="h-5 w-5 text-blue-600">
             <span class="text-sm font-medium text-gray-700">Afficher le détail de la TVA</span>
           </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_tax_id" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher le numéro d'identification fiscale</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_cashier" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher le nom du caissier</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_customer" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher les informations du client</span>
+          </label>
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_payment_method" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher le mode de paiement</span>
+          </label>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Message de pied de page</label>
-          <textarea id="receipt_footer" rows="3" class="w-full border rounded-lg px-4 py-2" 
-                    placeholder="Ex: Merci de votre visite ! À bientôt"></textarea>
+      </div>
+
+      <!-- Section Informations Légales -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold mb-4 text-blue-600">
+          <i class="fas fa-gavel mr-2"></i>Informations Légales
+        </h3>
+        <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-building mr-1"></i>Forme juridique
+            </label>
+            <input type="text" id="receipt_legal_form" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: SARL, SA, SPRL, Entreprise individuelle">
+            <p class="text-xs text-gray-500 mt-1">Apparaîtra sur les factures officielles</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-money-check mr-1"></i>Numéro de compte bancaire (IBAN)
+            </label>
+            <input type="text" id="receipt_bank_account" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: CD00 0000 0000 0000 0000 0000">
+            <p class="text-xs text-gray-500 mt-1">Pour les paiements par virement</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-university mr-1"></i>Nom de la banque
+            </label>
+            <input type="text" id="receipt_bank_name" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: Equity BCDC, Rawbank, TMB">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-mobile-alt mr-1"></i>Numéro Mobile Money
+            </label>
+            <input type="text" id="receipt_mobile_money" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: +243 XXX XXX XXX (M-Pesa, Airtel Money, Orange Money)">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-id-card mr-1"></i>Numéro de registre de commerce (RCCM)
+            </label>
+            <input type="text" id="receipt_rccm" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: CD/KNG/RCCM/XX-X-XXXXX">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-certificate mr-1"></i>Numéro d'identification nationale (ID NAT)
+            </label>
+            <input type="text" id="receipt_id_nat" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: XX-X-XXXXXXXXX-X">
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Taille du papier</label>
-          <select id="receipt_paper_size" class="w-full border rounded-lg px-4 py-2">
-            <option value="80mm">80mm (Standard)</option>
-            <option value="58mm">58mm (Petit)</option>
-            <option value="A4">A4</option>
-          </select>
+      </div>
+
+      <!-- Section Messages Personnalisés -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold mb-4 text-blue-600">
+          <i class="fas fa-comment-dots mr-2"></i>Messages Personnalisés
+        </h3>
+        <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">En-tête du reçu</label>
+            <textarea id="receipt_header" rows="2" class="w-full border rounded-lg px-4 py-2" 
+                      placeholder="Ex: Bienvenue chez nous !"></textarea>
+            <p class="text-xs text-gray-500 mt-1">Affiché en haut du reçu (optionnel)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Message de pied de page</label>
+            <textarea id="receipt_footer" rows="3" class="w-full border rounded-lg px-4 py-2" 
+                      placeholder="Ex: Merci de votre visite ! À bientôt"></textarea>
+            <p class="text-xs text-gray-500 mt-1">Affiché en bas du reçu</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Conditions générales de vente (CGV)</label>
+            <textarea id="receipt_terms" rows="3" class="w-full border rounded-lg px-4 py-2" 
+                      placeholder="Ex: Aucun remboursement après 7 jours. Garantie 30 jours."></textarea>
+            <p class="text-xs text-gray-500 mt-1">Conditions légales affichées en petit (optionnel)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-globe mr-1"></i>Site web
+            </label>
+            <input type="url" id="receipt_website" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: https://www.moncommerce.cd">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fab fa-facebook mr-1"></i>Réseaux sociaux
+            </label>
+            <input type="text" id="receipt_social" class="w-full border rounded-lg px-4 py-2" 
+                   placeholder="Ex: @moncommerce (Facebook, Instagram, WhatsApp)">
+          </div>
         </div>
-        <div>
+      </div>
+
+      <!-- Section Paramètres d'Impression -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold mb-4 text-blue-600">
+          <i class="fas fa-print mr-2"></i>Paramètres d'Impression
+        </h3>
+        <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Taille du papier</label>
+            <select id="receipt_paper_size" class="w-full border rounded-lg px-4 py-2">
+              <option value="80mm">80mm (Standard - Imprimante thermique)</option>
+              <option value="58mm">58mm (Petit - Imprimante portable)</option>
+              <option value="A4">A4 (Facture complète)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de copies</label>
+            <input type="number" id="receipt_copies" min="1" max="5" value="1" class="w-full border rounded-lg px-4 py-2">
+            <p class="text-xs text-gray-500 mt-1">Nombre d'exemplaires à imprimer (1-5)</p>
+          </div>
+
           <label class="flex items-center space-x-3">
             <input type="checkbox" id="receipt_auto_print" class="h-5 w-5 text-blue-600">
             <span class="text-sm font-medium text-gray-700">Impression automatique après chaque vente</span>
+          </label>
+
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_barcode" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher un code-barres de la facture</span>
+          </label>
+
+          <label class="flex items-center space-x-3">
+            <input type="checkbox" id="receipt_show_qr" class="h-5 w-5 text-blue-600">
+            <span class="text-sm font-medium text-gray-700">Afficher un QR code (pour paiement mobile)</span>
           </label>
         </div>
       </div>
@@ -227,14 +370,14 @@
         <div id="loyaltySettings" class="space-y-4 pl-8">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Points par FCFA dépensé</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Points par FC dépensé</label>
               <input type="number" id="loyalty_points_per_currency" min="0" step="0.01" class="w-full border rounded-lg px-4 py-2">
-              <p class="text-xs text-gray-500 mt-1">Ex: 0.1 = 1 point pour 10 FCFA</p>
+              <p class="text-xs text-gray-500 mt-1">Ex: 0.1 = 1 point pour 10 FC</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Valeur d'un point (FCFA)</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Valeur d'un point (FC)</label>
               <input type="number" id="loyalty_point_value" min="0" step="0.1" class="w-full border rounded-lg px-4 py-2">
-              <p class="text-xs text-gray-500 mt-1">Ex: 5 = 1 point = 5 FCFA</p>
+              <p class="text-xs text-gray-500 mt-1">Ex: 5 = 1 point = 5 FC</p>
             </div>
           </div>
           <div>
@@ -285,21 +428,78 @@
         'business_address': 'companyAddress',
         'business_phone': 'companyPhone',
         'business_email': 'companyEmail',
+        'business_tax_id': 'taxId',
         'manager_name': 'managerName',
         'currency': 'primaryCurrency',
+        'currency_position': 'currencyPosition',
         'tax_rate': 'taxRate',
-        'receipt_footer': 'receiptFooter'
+        'tax_included': 'taxIncluded',
+        'timezone': 'timezone',
+        'low_stock_threshold': 'lowStockThreshold',
+        'critical_stock_threshold': 'criticalStockThreshold',
+        'auto_restock_alerts': 'autoRestockAlerts',
+        'allow_negative_stock': 'allowNegativeStock',
+        // Receipt fields
+        'receipt_show_logo': 'receiptShowLogo',
+        'receipt_show_company_info': 'receiptShowCompanyInfo',
+        'receipt_show_tax': 'receiptShowTax',
+        'receipt_show_tax_id': 'receiptShowTaxId',
+        'receipt_show_cashier': 'receiptShowCashier',
+        'receipt_show_customer': 'receiptShowCustomer',
+        'receipt_show_payment_method': 'receiptShowPaymentMethod',
+        'receipt_header': 'receiptHeader',
+        'receipt_footer': 'receiptFooter',
+        'receipt_terms': 'receiptTerms',
+        'receipt_website': 'receiptWebsite',
+        'receipt_social': 'receiptSocial',
+        'receipt_legal_form': 'receiptLegalForm',
+        'receipt_bank_account': 'receiptBankAccount',
+        'receipt_bank_name': 'receiptBankName',
+        'receipt_mobile_money': 'receiptMobileMoney',
+        'receipt_rccm': 'receiptRccm',
+        'receipt_id_nat': 'receiptIdNat',
+        'receipt_paper_size': 'receiptPaperSize',
+        'receipt_copies': 'receiptCopies',
+        'receipt_auto_print': 'receiptAutoPrint',
+        'receipt_show_barcode': 'receiptShowBarcode',
+        'receipt_show_qr': 'receiptShowQr'
       };
       
       for (const [fieldId, settingKey] of Object.entries(fieldMapping)) {
         const field = document.getElementById(fieldId);
         if (field && settings[settingKey] !== undefined) {
           if (field.type === 'checkbox') {
-            field.checked = settings[settingKey] === true;
+            field.checked = settings[settingKey] === true || settings[settingKey] === 'true';
           } else {
             field.value = settings[settingKey];
           }
         }
+      }
+      
+      // Si primaryCurrency n'est pas défini, mettre FC par défaut
+      const currencyField = document.getElementById('currency');
+      if (currencyField && !currencyField.value) {
+        currencyField.value = 'FC';
+      }
+
+      // Charger le logo depuis MongoDB
+      if (settings.logo) {
+        currentLogo = settings.logo;
+        displayLogo(settings.logo);
+      }
+
+      // Loyalty fields (new Mongo format)
+      if (settings.loyaltyEnabled !== undefined) {
+        document.getElementById('loyalty_enabled').checked = !!settings.loyaltyEnabled;
+      }
+      if (settings.loyaltyPointsPerCurrency !== undefined) {
+        document.getElementById('loyalty_points_per_currency').value = settings.loyaltyPointsPerCurrency;
+      }
+      if (settings.loyaltyPointValue !== undefined) {
+        document.getElementById('loyalty_point_value').value = settings.loyaltyPointValue;
+      }
+      if (settings.loyaltyMinPoints !== undefined) {
+        document.getElementById('loyalty_min_points').value = settings.loyaltyMinPoints;
       }
     }
 
@@ -408,53 +608,68 @@
   }
 
   async function saveSettings() {
-    const settingsToSave = [
-      // Business
-      { key: 'business_name', value: document.getElementById('business_name').value },
-      { key: 'business_address', value: document.getElementById('business_address').value },
-      { key: 'business_phone', value: document.getElementById('business_phone').value },
-      { key: 'business_email', value: document.getElementById('business_email').value },
-      { key: 'business_tax_id', value: document.getElementById('business_tax_id').value },
-      { key: 'manager_name', value: document.getElementById('manager_name').value },
-      
-      // General
-      { key: 'currency', value: document.getElementById('currency').value },
-      { key: 'currency_position', value: document.getElementById('currency_position').value },
-      { key: 'tax_rate', value: document.getElementById('tax_rate').value },
-      { key: 'tax_included', value: document.getElementById('tax_included').value },
-      { key: 'timezone', value: document.getElementById('timezone').value },
-      
-      // Inventory
-      { key: 'low_stock_threshold', value: document.getElementById('low_stock_threshold').value },
-      { key: 'critical_stock_threshold', value: document.getElementById('critical_stock_threshold').value },
-      { key: 'auto_restock_alerts', value: document.getElementById('auto_restock_alerts').checked.toString() },
-      { key: 'allow_negative_stock', value: document.getElementById('allow_negative_stock').checked.toString() },
-      
-      // Receipt
-      { key: 'receipt_show_logo', value: document.getElementById('receipt_show_logo').checked.toString() },
-      { key: 'receipt_show_tax', value: document.getElementById('receipt_show_tax').checked.toString() },
-      { key: 'receipt_footer', value: document.getElementById('receipt_footer').value },
-      { key: 'receipt_paper_size', value: document.getElementById('receipt_paper_size').value },
-      { key: 'receipt_auto_print', value: document.getElementById('receipt_auto_print').checked.toString() },
-      
-      // Loyalty
-      { key: 'loyalty_enabled', value: document.getElementById('loyalty_enabled').checked.toString() },
-      { key: 'loyalty_points_per_currency', value: document.getElementById('loyalty_points_per_currency').value },
-      { key: 'loyalty_point_value', value: document.getElementById('loyalty_point_value').value },
-      { key: 'loyalty_min_points', value: document.getElementById('loyalty_min_points').value }
-    ];
-
     try {
-      // Préparer les données au format MongoDB
+      // Préparer les données au format MongoDB avec TOUS les champs
+      const currencyValue = document.getElementById('currency').value || 'FC'; // Valeur par défaut
+      
       const mongoSettings = {
-        companyName: document.getElementById('business_name').value,
-        companyAddress: document.getElementById('business_address').value,
-        companyPhone: document.getElementById('business_phone').value,
-        companyEmail: document.getElementById('business_email').value,
-        managerName: document.getElementById('manager_name').value,
-        primaryCurrency: document.getElementById('currency').value,
+        // Business info
+        companyName: document.getElementById('business_name').value || 'Ma Boutique',
+        companyAddress: document.getElementById('business_address').value || '',
+        companyPhone: document.getElementById('business_phone').value || '',
+        companyEmail: document.getElementById('business_email').value || '',
+        taxId: document.getElementById('business_tax_id').value || '',
+        managerName: document.getElementById('manager_name').value || 'Gérant',
+        
+        // General settings
+        primaryCurrency: currencyValue,
+        currencyPosition: document.getElementById('currency_position').value || 'before',
         taxRate: parseFloat(document.getElementById('tax_rate').value) || 0,
-        receiptFooter: document.getElementById('receipt_footer').value
+        taxIncluded: document.getElementById('tax_included').value === 'true',
+        timezone: document.getElementById('timezone').value || 'Africa/Kinshasa',
+        
+        // Inventory settings
+        lowStockThreshold: parseInt(document.getElementById('low_stock_threshold').value) || 10,
+        criticalStockThreshold: parseInt(document.getElementById('critical_stock_threshold').value) || 5,
+        autoRestockAlerts: document.getElementById('auto_restock_alerts').checked,
+        allowNegativeStock: document.getElementById('allow_negative_stock').checked,
+        
+        // Receipt settings - Affichage
+        receiptShowLogo: document.getElementById('receipt_show_logo').checked,
+        receiptShowCompanyInfo: document.getElementById('receipt_show_company_info').checked,
+        receiptShowTax: document.getElementById('receipt_show_tax').checked,
+        receiptShowTaxId: document.getElementById('receipt_show_tax_id').checked,
+        receiptShowCashier: document.getElementById('receipt_show_cashier').checked,
+        receiptShowCustomer: document.getElementById('receipt_show_customer').checked,
+        receiptShowPaymentMethod: document.getElementById('receipt_show_payment_method').checked,
+        
+        // Receipt settings - Informations légales
+        receiptLegalForm: document.getElementById('receipt_legal_form').value || '',
+        receiptBankAccount: document.getElementById('receipt_bank_account').value || '',
+        receiptBankName: document.getElementById('receipt_bank_name').value || '',
+        receiptMobileMoney: document.getElementById('receipt_mobile_money').value || '',
+        receiptRccm: document.getElementById('receipt_rccm').value || '',
+        receiptIdNat: document.getElementById('receipt_id_nat').value || '',
+        
+        // Receipt settings - Messages personnalisés
+        receiptHeader: document.getElementById('receipt_header').value || '',
+        receiptFooter: document.getElementById('receipt_footer').value || 'Merci de votre visite!',
+        receiptTerms: document.getElementById('receipt_terms').value || '',
+        receiptWebsite: document.getElementById('receipt_website').value || '',
+        receiptSocial: document.getElementById('receipt_social').value || '',
+        
+        // Receipt settings - Impression
+        receiptPaperSize: document.getElementById('receipt_paper_size').value || '80mm',
+        receiptCopies: parseInt(document.getElementById('receipt_copies').value) || 1,
+        receiptAutoPrint: document.getElementById('receipt_auto_print').checked,
+        receiptShowBarcode: document.getElementById('receipt_show_barcode').checked,
+        receiptShowQr: document.getElementById('receipt_show_qr').checked,
+        
+        // Loyalty settings
+        loyaltyEnabled: document.getElementById('loyalty_enabled').checked,
+        loyaltyPointsPerCurrency: parseFloat(document.getElementById('loyalty_points_per_currency').value) || 0,
+        loyaltyPointValue: parseFloat(document.getElementById('loyalty_point_value').value) || 0,
+        loyaltyMinPoints: parseInt(document.getElementById('loyalty_min_points').value) || 0
       };
       
       const response = await apiRequest('/api/settings', {

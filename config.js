@@ -24,7 +24,7 @@ module.exports = {
   // Configuration des reçus
   receipts: {
     directory: './receipts',
-    currency: 'FCFA',
+    currency: 'FC',
     locale: 'fr-FR',
     taxRate: 0, // Taux de TVA (0 = pas de TVA)
     footer: {

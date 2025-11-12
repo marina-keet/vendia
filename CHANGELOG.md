@@ -272,7 +272,7 @@ Idéal pour :
 #### 🌍 Localisation
 
 - Interface en français
-- Devise : FCFA (Franc CFA)
+- Devise : FC (Franc Congolais)
 - Format de date : français (jj/mm/aaaa)
 - Méthodes de paiement adaptées (Mobile Money)
 

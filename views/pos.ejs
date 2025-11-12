@@ -805,11 +805,41 @@
       const customerName = data.customerName || 'Client anonyme';
       const cashierName = data.cashierName || 'N/A';
       
-      // Charger les paramètres de devise
+      // Charger les paramètres de l'entreprise
       const settingsResponse = await fetch('/api/settings');
-      const settingsData = await settingsResponse.json();
-      const currency = settingsData.settings?.primaryCurrency || 'FC';
+      const settings = await settingsResponse.json();
+      
+      // Paramètres de base
+      const currency = settings.primaryCurrency || 'FC';
       const currencySymbol = currency === 'USD' ? '$' : 'FC';
+      const companyName = settings.companyName || 'Ma Boutique';
+      const companyAddress = settings.companyAddress || '';
+      const companyPhone = settings.companyPhone || '';
+      const companyEmail = settings.companyEmail || '';
+      const companyLogo = settings.logo || null;
+      const taxId = settings.taxId || '';
+      
+      // Paramètres de reçu
+      const showLogo = settings.receiptShowLogo !== false && companyLogo;
+      const showCompanyInfo = settings.receiptShowCompanyInfo !== false;
+      const showTaxId = settings.receiptShowTaxId === true && taxId;
+      const showCashier = settings.receiptShowCashier !== false;
+      const showCustomer = settings.receiptShowCustomer !== false;
+      const showPaymentMethod = settings.receiptShowPaymentMethod !== false;
+      const showTax = settings.receiptShowTax !== false;
+      
+      const receiptHeader = settings.receiptHeader || '';
+      const receiptFooter = settings.receiptFooter || 'Merci de votre visite !';
+      const receiptTerms = settings.receiptTerms || '';
+      const receiptWebsite = settings.receiptWebsite || '';
+      const receiptSocial = settings.receiptSocial || '';
+      
+      const legalForm = settings.receiptLegalForm || '';
+      const bankAccount = settings.receiptBankAccount || '';
+      const bankName = settings.receiptBankName || '';
+      const mobileMoney = settings.receiptMobileMoney || '';
+      const rccm = settings.receiptRccm || '';
+      const idNat = settings.receiptIdNat || '';
       
       // Fonction pour formater la devise
       const formatCurrency = (amount) => {
@@ -832,11 +862,31 @@
       
       const preview = `
         <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-          <!-- En-tête -->
+          <!-- En-tête personnalisé -->
+          ${receiptHeader ? `
+            <div class="text-center mb-3 text-blue-600 font-medium">
+              ${receiptHeader}
+            </div>
+          ` : ''}
+          
+          <!-- En-tête entreprise -->
           <div class="text-center border-b pb-4 mb-4">
-            <h3 class="text-2xl font-bold text-gray-800">VENDIA Commerce</h3>
-            <p class="text-sm text-gray-600">Kinshasa, RDC</p>
-            <p class="text-sm text-gray-600">+243 XXX XXX XXX</p>
+            ${showLogo ? `
+              <img src="${companyLogo}" alt="Logo" class="h-20 mx-auto mb-3 object-contain">
+            ` : ''}
+            <h3 class="text-2xl font-bold text-gray-800">${companyName}</h3>
+            ${legalForm ? `<p class="text-xs text-gray-500 italic">${legalForm}</p>` : ''}
+            ${showCompanyInfo ? `
+              ${companyAddress ? `<p class="text-sm text-gray-600 mt-1">${companyAddress}</p>` : ''}
+              <div class="text-sm text-gray-600 mt-1">
+                ${companyPhone ? `<span>📞 ${companyPhone}</span>` : ''}
+                ${companyPhone && companyEmail ? ' | ' : ''}
+                ${companyEmail ? `<span>✉️ ${companyEmail}</span>` : ''}
+              </div>
+            ` : ''}
+            ${showTaxId ? `<p class="text-xs text-gray-500 mt-1">N° Fiscal: ${taxId}</p>` : ''}
+            ${rccm ? `<p class="text-xs text-gray-500">RCCM: ${rccm}</p>` : ''}
+            ${idNat ? `<p class="text-xs text-gray-500">ID NAT: ${idNat}</p>` : ''}
           </div>
           
           <!-- Informations de la facture -->
@@ -849,14 +899,18 @@
               <p class="text-sm text-gray-600">Date</p>
               <p class="font-semibold">${new Date(sale.created_at).toLocaleString('fr-FR')}</p>
             </div>
-            <div>
-              <p class="text-sm text-gray-600">Client</p>
-              <p class="font-semibold">${customerName}</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">Caissier</p>
-              <p class="font-semibold">${cashierName}</p>
-            </div>
+            ${showCustomer ? `
+              <div>
+                <p class="text-sm text-gray-600">Client</p>
+                <p class="font-semibold">${customerName}</p>
+              </div>
+            ` : ''}
+            ${showCashier ? `
+              <div>
+                <p class="text-sm text-gray-600">Caissier</p>
+                <p class="font-semibold">${cashierName}</p>
+              </div>
+            ` : ''}
           </div>
           
           <!-- Articles -->
@@ -889,16 +943,46 @@
               <span class="font-semibold">-${formatCurrency(sale.discount)}</span>
             </div>
             ` : ''}
+            ${showTax && sale.tax_amount > 0 ? `
+            <div class="flex justify-between text-gray-600">
+              <span>TVA:</span>
+              <span class="font-semibold">${formatCurrency(sale.tax_amount)}</span>
+            </div>
+            ` : ''}
             <div class="flex justify-between text-xl font-bold border-t pt-2 mt-2">
               <span class="text-gray-800">TOTAL:</span>
               <span class="text-green-600">${formatCurrency(sale.final_amount)}</span>
             </div>
           </div>
           
+          <!-- Informations bancaires -->
+          ${bankAccount || mobileMoney ? `
+            <div class="mt-4 pt-4 border-t text-sm">
+              <p class="font-semibold text-gray-700 mb-2">💳 Informations de paiement</p>
+              ${bankName && bankAccount ? `
+                <p class="text-gray-600">${bankName}: ${bankAccount}</p>
+              ` : ''}
+              ${mobileMoney ? `
+                <p class="text-gray-600">📱 Mobile Money: ${mobileMoney}</p>
+              ` : ''}
+            </div>
+          ` : ''}
+          
           <!-- Pied de page -->
           <div class="text-center mt-6 pt-4 border-t">
-            <p class="text-gray-600">Mode de paiement: <span class="font-semibold">${getPaymentMethodLabel(sale.payment_method)}</span></p>
-            <p class="text-sm text-gray-500 mt-2">Merci de votre visite !</p>
+            ${showPaymentMethod ? `
+              <p class="text-gray-600 mb-2">Mode de paiement: <span class="font-semibold">${getPaymentMethodLabel(sale.payment_method)}</span></p>
+            ` : ''}
+            <p class="text-sm text-gray-500 font-medium">${receiptFooter}</p>
+            ${receiptWebsite ? `
+              <p class="text-xs text-blue-600 mt-2">🌐 ${receiptWebsite}</p>
+            ` : ''}
+            ${receiptSocial ? `
+              <p class="text-xs text-gray-500 mt-1">📱 ${receiptSocial}</p>
+            ` : ''}
+            ${receiptTerms ? `
+              <p class="text-xs text-gray-400 mt-3 italic">${receiptTerms}</p>
+            ` : ''}
           </div>
         </div>
       `;

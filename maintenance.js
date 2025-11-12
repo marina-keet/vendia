@@ -110,7 +110,7 @@ function showStats() {
     });
     
     db.get('SELECT COUNT(*) as count, COALESCE(SUM(final_amount), 0) as total FROM sales', (err, row) => {
-      console.log(`Ventes: ${row.count} (Total: ${row.total.toFixed(0)} FCFA)`);
+      console.log(`Ventes: ${row.count} (Total: ${row.total.toFixed(0)} FC)`);
     });
     
     db.get('SELECT COUNT(*) as count FROM products WHERE stock <= 5', (err, row) => {
@@ -122,7 +122,7 @@ function showStats() {
       FROM sales 
       WHERE DATE(created_at) = DATE('now')
     `, (err, row) => {
-      console.log(`Ventes aujourd'hui: ${row.today_count} (${row.today_total.toFixed(0)} FCFA)`);
+      console.log(`Ventes aujourd'hui: ${row.today_count} (${row.today_total.toFixed(0)} FC)`);
       db.close();
     });
   });

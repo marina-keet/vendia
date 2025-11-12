@@ -1,0 +1,25 @@
+[dotenv@17.2.3] injecting env (7) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+/home/marina/vendia/routes/pdf-report.js:327
+    const worstData = [['Rang', 'Produit', 'Quantité', 'Revenu', 'Statut']];
+          ^
+
+SyntaxError: Identifier 'worstData' has already been declared
+    at wrapSafe (node:internal/modules/cjs/loader:1691:18)
+    at Module._compile (node:internal/modules/cjs/loader:1734:20)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1480:32)
+    at Module._load (node:internal/modules/cjs/loader:1299:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.require (node:internal/modules/cjs/loader:1503:12)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (/home/marina/vendia/server.js:32:25)
+
+Node.js v24.8.0
+[dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+🚀 Serveur démarré sur http://localhost:3000
+📊 Dashboard: http://localhost:3000
+🛒 Point de vente: http://localhost:3000/pos
+📦 Produits: http://localhost:3000/products
+📈 Rapports: http://localhost:3000/reports
+✅ MongoDB connecté avec succès!

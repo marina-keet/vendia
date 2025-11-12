@@ -1,0 +1,17 @@
+[Unit]
+Description=Vendia Commerce Application
+After=network.target mongodb.service
+
+[Service]
+Type=simple
+User=marina
+WorkingDirectory=/home/marina/vendia
+Environment="NODE_ENV=production"
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/marina/vendia/logs/server.log
+StandardError=append:/home/marina/vendia/logs/error.log
+
+[Install]
+WantedBy=multi-user.target

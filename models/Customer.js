@@ -19,6 +19,18 @@ const customerSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  loyalty_points: {
+    type: Number,
+    default: 0
+  },
+  total_purchases: {
+    type: Number,
+    default: 0
+  },
+  visit_count: {
+    type: Number,
+    default: 0
+  },
   notes: {
     type: String,
     trim: true

@@ -5,9 +5,20 @@
     <h1 class="text-3xl font-bold text-gray-800">
       <i class="fas fa-users text-blue-600 mr-2"></i>Gestion des Clients
     </h1>
-    <button onclick="openCustomerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-      <i class="fas fa-plus mr-2"></i>Nouveau Client
-    </button>
+    <div class="flex items-center gap-4">
+      <!-- Boutons de devise -->
+      <div class="flex gap-2">
+        <button onclick="setCurrency('FC')" id="btnFC" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+          <i class="fas fa-coins mr-1"></i>FC
+        </button>
+        <button onclick="setCurrency('USD')" id="btnUSD" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition">
+          <i class="fas fa-dollar-sign mr-1"></i>USD
+        </button>
+      </div>
+      <button onclick="openCustomerModal()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+        <i class="fas fa-plus mr-2"></i>Nouveau Client
+      </button>
+    </div>
   </div>
 
   <!-- Recherche -->
@@ -106,6 +117,33 @@
 
 <script>
   let customers = [];
+  let currentUser = JSON.parse(localStorage.getItem('user')) || {};
+  let currentCurrency = 'FC';
+  let exchangeRate = 2450; // 1 USD = 2450 FC
+
+  function formatCurrency(amount) {
+    const value = currentCurrency === 'USD' ? (amount / exchangeRate) : amount;
+    const formatted = new Intl.NumberFormat('fr-FR', { 
+      minimumFractionDigits: currentCurrency === 'USD' ? 2 : 0,
+      maximumFractionDigits: currentCurrency === 'USD' ? 2 : 0
+    }).format(value);
+    return `${formatted} ${currentCurrency}`;
+  }
+
+  function setCurrency(currency) {
+    currentCurrency = currency;
+    
+    // Mettre à jour les styles des boutons
+    if (currency === 'FC') {
+      document.getElementById('btnFC').className = 'px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition';
+      document.getElementById('btnUSD').className = 'px-4 py-2 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition';
+    } else {
+      document.getElementById('btnFC').className = 'px-4 py-2 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400 transition';
+      document.getElementById('btnUSD').className = 'px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition';
+    }
+    
+    displayCustomers(customers);
+  }
 
   async function loadCustomers() {
     const response = await apiRequest('/api/customers');
@@ -131,18 +169,20 @@
         <div class="flex justify-between items-start mb-4">
           <div>
             <h3 class="text-xl font-bold text-gray-800">${c.name}</h3>
-            <p class="text-sm text-gray-500">Client #${c.id}</p>
+            <p class="text-sm text-gray-500">Client #${c._id}</p>
           </div>
           <div class="flex space-x-2">
-            <button onclick="viewCustomer(${c.id})" class="text-blue-600 hover:text-blue-800" title="Voir détails">
+            <button data-customer-id="${c._id}" class="view-customer-btn text-blue-600 hover:text-blue-800" title="Voir détails">
               <i class="fas fa-eye"></i>
             </button>
-            <button onclick="editCustomer(${c.id})" class="text-yellow-600 hover:text-yellow-800" title="Modifier">
+            <button data-customer-id="${c._id}" class="edit-customer-btn text-yellow-600 hover:text-yellow-800" title="Modifier">
               <i class="fas fa-edit"></i>
             </button>
-            <button onclick="deleteCustomer(${c.id}, '${c.name}')" class="text-red-600 hover:text-red-800" title="Supprimer">
-              <i class="fas fa-trash"></i>
-            </button>
+            ${(currentUser.role === 'admin' || currentUser.role === 'manager') ? `
+              <button data-customer-id="${c._id}" data-customer-name="${c.name}" class="delete-customer-btn text-red-600 hover:text-red-800" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            ` : ''}
           </div>
         </div>
 
@@ -172,7 +212,7 @@
           </div>
           <div class="text-right">
             <p class="text-xs text-gray-500">Membre depuis</p>
-            <p class="text-sm font-medium">${new Date(c.created_at).toLocaleDateString('fr-FR')}</p>
+            <p class="text-sm font-medium">${new Date(c.member_since || c.created_at).toLocaleDateString('fr-FR')}</p>
           </div>
         </div>
       </div>
@@ -194,7 +234,7 @@
 
   function openCustomerModal(customer = null) {
     document.getElementById('modalTitle').textContent = customer ? 'Modifier le Client' : 'Nouveau Client';
-    document.getElementById('customerId').value = customer ? customer.id : '';
+    document.getElementById('customerId').value = customer ? (customer._id || customer.id) : '';
     document.getElementById('customerName').value = customer ? customer.name : '';
     document.getElementById('customerPhone').value = customer ? customer.phone : '';
     document.getElementById('customerEmail').value = customer ? customer.email || '' : '';
@@ -242,9 +282,18 @@
   });
 
   async function editCustomer(id) {
-    const customer = customers.find(c => c.id === id);
-    if (customer) {
-      openCustomerModal(customer);
+    try {
+      console.log('✏️ Modification du client:', id);
+      const response = await apiRequest(`/api/customers/${id}`);
+      const data = await response.json();
+      console.log('📦 Données client pour modification:', data);
+      
+      if (data.customer) {
+        openCustomerModal(data.customer);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement pour modification:', error);
+      alert('Erreur lors du chargement du client: ' + error.message);
     }
   }
 
@@ -271,17 +320,22 @@
   }
 
   async function viewCustomer(id) {
-    const response = await apiRequest(`/api/customers/${id}`);
-    const data = await response.json();
-    
-    const statsResponse = await apiRequest(`/api/customers/${id}/stats`);
-    const stats = await statsResponse.json();
+    try {
+      console.log('🔍 Chargement des détails du client:', id);
+      
+      const response = await apiRequest(`/api/customers/${id}`);
+      const data = await response.json();
+      console.log('📦 Données client reçues:', data);
+      
+      const statsResponse = await apiRequest(`/api/customers/${id}/stats`);
+      const stats = await statsResponse.json();
+      console.log('📊 Statistiques reçues:', stats);
     
     const detailsHtml = `
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-blue-50 p-4 rounded-lg">
           <p class="text-sm text-blue-600 font-medium">Total Achats</p>
-          <p class="text-2xl font-bold text-blue-800">${stats.totalPurchases.toFixed(0)} FCFA</p>
+          <p class="text-2xl font-bold text-blue-800">${formatCurrency(stats.totalPurchases)}</p>
         </div>
         <div class="bg-green-50 p-4 rounded-lg">
           <p class="text-sm text-green-600 font-medium">Nombre de Ventes</p>
@@ -336,7 +390,7 @@
                   <tr>
                     <td class="px-4 py-2">${new Date(s.created_at).toLocaleDateString('fr-FR')}</td>
                     <td class="px-4 py-2">#${s.id}</td>
-                    <td class="px-4 py-2 text-right font-bold">${s.final_amount.toFixed(0)} FCFA</td>
+                    <td class="px-4 py-2 text-right font-bold">${formatCurrency(s.final_amount)}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -348,11 +402,48 @@
     
     document.getElementById('customerDetailsContent').innerHTML = detailsHtml;
     document.getElementById('customerDetailsModal').classList.remove('hidden');
+    console.log('✅ Modal détails ouverte');
+    
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des détails:', error);
+      alert('Erreur lors du chargement des détails du client: ' + error.message);
+    }
   }
 
   function closeDetailsModal() {
     document.getElementById('customerDetailsModal').classList.add('hidden');
   }
+
+  // Event delegation pour les boutons des clients
+  document.getElementById('customersList').addEventListener('click', function(e) {
+    const viewBtn = e.target.closest('.view-customer-btn');
+    if (viewBtn) {
+      console.log('🖱️ Clic détecté sur bouton Voir détails');
+      const customerId = viewBtn.getAttribute('data-customer-id');
+      console.log('👤 ID client:', customerId);
+      viewCustomer(customerId);
+      return;
+    }
+
+    const editBtn = e.target.closest('.edit-customer-btn');
+    if (editBtn) {
+      console.log('🖱️ Clic détecté sur bouton Modifier');
+      const customerId = editBtn.getAttribute('data-customer-id');
+      console.log('✏️ ID client:', customerId);
+      editCustomer(customerId);
+      return;
+    }
+
+    const deleteBtn = e.target.closest('.delete-customer-btn');
+    if (deleteBtn) {
+      console.log('🖱️ Clic détecté sur bouton Supprimer');
+      const customerId = deleteBtn.getAttribute('data-customer-id');
+      const customerName = deleteBtn.getAttribute('data-customer-name');
+      console.log('🗑️ ID client:', customerId, 'Nom:', customerName);
+      deleteCustomer(customerId, customerName);
+      return;
+    }
+  });
 
   // Charger au démarrage
   loadCustomers();

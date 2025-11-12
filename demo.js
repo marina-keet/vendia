@@ -142,7 +142,7 @@ db.serialize(() => {
           VALUES (?, ?, ?)
         `, [saleId, sale.paymentMethod, finalAmount]);
 
-        console.log(`   ✅ Vente #${saleId} créée (${finalAmount} FCFA)`);
+        console.log(`   ✅ Vente #${saleId} créée (${finalAmount} FC)`);
       });
     });
 
@@ -155,7 +155,7 @@ db.serialize(() => {
       });
 
       db.get('SELECT COUNT(*) as count, SUM(final_amount) as total FROM sales', (err, row) => {
-        console.log(`   - ${row.count} ventes (Total: ${row.total} FCFA)`);
+        console.log(`   - ${row.count} ventes (Total: ${row.total} FC)`);
       });
 
       setTimeout(() => {

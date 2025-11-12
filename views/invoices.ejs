@@ -1,22 +1,12 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Factures - Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-gray-100">
-    <%- include('partials/header') %>
+<%- include('partials/header') %>
 
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">
-                <i class="fas fa-file-invoice text-blue-600"></i>
-                Gestion des Factures
-            </h1>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+            Gestion des Factures
+        </h1>
+    </div>
 
         <!-- Filtres -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -263,14 +253,14 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <button onclick="viewDetails(${sale.id})" class="text-blue-600 hover:text-blue-800 mr-3" title="Voir détails">
+                            <button data-sale-id="${sale.id}" class="view-details-btn text-blue-600 hover:text-blue-800 mr-3" title="Voir détails">
                                 <i class="fas fa-eye"></i>
                             </button>
                             <a href="/api/sales/${sale.id}/receipt" target="_blank" class="text-purple-600 hover:text-purple-800 mr-3" title="Télécharger PDF">
                                 <i class="fas fa-download"></i>
                             </a>
                             ${currentUser.role === 'admin' ? `
-                                <button onclick="openDeleteModal('${sale._id || sale.id}')" class="text-red-600 hover:text-red-800" title="Supprimer">
+                                <button data-delete-id="${sale._id || sale.id}" class="delete-invoice-btn text-red-600 hover:text-red-800" title="Supprimer">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             ` : ''}
@@ -450,8 +440,29 @@
             document.getElementById('endDate').valueAsDate = today;
             document.getElementById('startDate').valueAsDate = lastWeek;
 
+            // Event delegation pour les boutons "Voir détails"
+            document.getElementById('invoicesTable').addEventListener('click', function(e) {
+                const detailsBtn = e.target.closest('.view-details-btn');
+                if (detailsBtn) {
+                    console.log('🖱️ Clic détecté sur bouton Détails');
+                    const saleId = detailsBtn.getAttribute('data-sale-id');
+                    console.log('📋 ID facture:', saleId);
+                    viewDetails(saleId);
+                    return;
+                }
+
+                const deleteBtn = e.target.closest('.delete-invoice-btn');
+                if (deleteBtn) {
+                    console.log('🖱️ Clic détecté sur bouton Supprimer');
+                    const deleteId = deleteBtn.getAttribute('data-delete-id');
+                    console.log('🗑️ ID à supprimer:', deleteId);
+                    openDeleteModal(deleteId);
+                    return;
+                }
+            });
+
             loadInvoices();
         });
     </script>
-</body>
-</html>
+
+<%- include('partials/footer') %>

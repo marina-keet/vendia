@@ -6,14 +6,16 @@
   <title>Gestion Commerce</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100">
   <nav class="bg-blue-600 text-white shadow-lg">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between py-4">
         <div class="flex items-center space-x-2">
-          <i class="fas fa-store text-2xl"></i>
-          <span class="text-xl font-bold">Mon Commerce</span>
+          <img id="companyLogo" src="" alt="" class="hidden h-10 w-10 object-contain rounded">
+          <i id="companyLogoIcon" class="fas fa-store text-2xl"></i>
+          <span id="companyName" class="text-xl font-bold">Mon Commerce</span>
         </div>
         <div class="flex space-x-6">
           <a href="/" class="hover:text-blue-200 transition">
@@ -134,4 +136,34 @@
       
       return response;
     };
+
+    // Charger les paramètres de l'entreprise
+    async function loadCompanySettings() {
+      try {
+        const response = await fetch('/api/settings');
+        if (response.ok) {
+          const settings = await response.json();
+          
+          // Mettre à jour le nom de l'entreprise
+          if (settings.companyName) {
+            document.getElementById('companyName').textContent = settings.companyName;
+            document.title = settings.companyName + ' - Gestion Commerce';
+          }
+          
+          // Mettre à jour le logo
+          if (settings.logo) {
+            const logoImg = document.getElementById('companyLogo');
+            const logoIcon = document.getElementById('companyLogoIcon');
+            logoImg.src = settings.logo;
+            logoImg.classList.remove('hidden');
+            logoIcon.classList.add('hidden');
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement paramètres:', error);
+      }
+    }
+
+    // Charger les paramètres au démarrage
+    loadCompanySettings();
   </script>

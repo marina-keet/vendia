@@ -53,7 +53,7 @@ Catalogue complet des produits avec gestion du stock.
 | **id** | INTEGER (PK) | Identifiant unique auto-incrémenté |
 | **name** | TEXT | Nom du produit |
 | **description** | TEXT | Description détaillée (optionnel) |
-| **price** | REAL | Prix unitaire en FCFA |
+| **price** | REAL | Prix unitaire en FC |
 | **stock** | INTEGER | Quantité disponible en stock |
 | **category** | TEXT | Catégorie du produit |
 | **barcode** | TEXT | Code-barres pour scan (optionnel) |
@@ -160,7 +160,7 @@ Base de données clients avec programme de fidélité.
 
 **Programme de fidélité :**
 - Les points sont calculés selon la configuration dans `settings`
-- Exemple : 1 point pour chaque 100 FCFA dépensés
+- Exemple : 1 point pour chaque 100 FC dépensés
 
 ---
 

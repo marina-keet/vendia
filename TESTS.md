@@ -147,7 +147,7 @@ curl http://localhost:3000/api/products/search/barcode/3245678901234
 1. Aller sur `/pos`
 2. Ajouter "Coca-Cola" x2
 3. Ajouter "Pain" x1
-4. Appliquer remise de 100 FCFA
+4. Appliquer remise de 100 FC
 5. Choisir paiement "Espèces"
 6. Valider la vente
 7. Imprimer le reçu

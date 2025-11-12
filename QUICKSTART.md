@@ -56,7 +56,7 @@ Après connexion, configurez votre commerce :
    - Adresse, téléphone, email
    - Numéro fiscal
 3. **Onglet Général :**
-   - Devise (FCFA par défaut)
+   - Devise (FC par défaut)
    - Taux de TVA
 4. **Onglet Inventaire :**
    - Seuils d'alerte stock
@@ -123,7 +123,7 @@ Une fois connecté, vous avez accès à :
 2. Cliquer sur **"Nouveau Produit"**
 3. Remplir :
    - Nom du produit
-   - Prix en FCFA
+   - Prix en FC
    - Quantité en stock
    - Catégorie (optionnel)
 4. Enregistrer
