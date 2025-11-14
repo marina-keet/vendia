@@ -48,6 +48,8 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remise</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net à payer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant reçu</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant rendu</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -247,6 +249,8 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(sale.total_amount)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-${formatCurrency(sale.discount)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">${formatCurrency(sale.final_amount)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">${formatCurrency(typeof sale.amount_received === 'number' ? sale.amount_received : 0)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700">${formatCurrency(typeof sale.amount_returned === 'number' ? sale.amount_returned : 0)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <span class="px-2 py-1 text-xs rounded-full ${getPaymentBadgeClass(sale.payment_method)}">
                                 ${paymentLabel}
@@ -346,6 +350,14 @@
                             <div>
                                 <p class="text-sm text-gray-600">Notes</p>
                                 <p class="font-semibold">${data.sale.notes || 'Aucune'}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Montant reçu</p>
+                                <p class="font-semibold">${formatCurrency(typeof data.sale.amount_received === 'number' ? data.sale.amount_received : 0)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Montant rendu</p>
+                                <p class="font-semibold">${formatCurrency(typeof data.sale.amount_returned === 'number' ? data.sale.amount_returned : 0)}</p>
                             </div>
                         </div>
 

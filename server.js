@@ -1,13 +1,12 @@
-// Charger les variables d'environnement
-require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const connectDB = require('./config/database');
+// Charger les variables d'environnement
+require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+
 
 // Connexion à MongoDB
 connectDB();
@@ -40,7 +39,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/pdf-report', pdfReportRoutes);
 
-// Pages principales
+
 app.get('/', (req, res) => {
   res.render('index');
 });

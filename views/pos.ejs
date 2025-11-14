@@ -752,20 +752,32 @@
     const paymentMethod = document.getElementById('paymentMethod').value;
     const discount = parseFloat(document.getElementById('discount').value) || 0;
     const customerId = document.getElementById('customerId').value || null;
-    
+
     // Récupérer le nom du client
     let customerName = 'Client anonyme';
     if (customerId) {
       const selectedOption = document.getElementById('customerId').selectedOptions[0];
       customerName = selectedOption ? selectedOption.textContent : 'Client anonyme';
     }
-    
+
+    // Récupérer les montants reçus et à rendre
+    const amountReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+    // Calcul du total à payer (dans la devise courante)
+    const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const total = Math.max(0, subtotal - discount);
+    const totalInCurrentCurrency = currentCurrency === 'USD' 
+      ? convertAmount(total, 'FC', 'USD')
+      : total;
+    const amountReturned = amountReceived - totalInCurrentCurrency >= 0 ? amountReceived - totalInCurrentCurrency : 0;
+
     const saleData = {
       items: cart,
       paymentMethod: paymentMethod,
       discount: discount,
       customerId: customerId ? parseInt(customerId) : null,
-      customerName: customerName
+      customerName: customerName,
+      amountReceived: amountReceived,
+      amountReturned: amountReturned
     };
     
     try {

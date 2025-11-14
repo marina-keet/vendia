@@ -124,6 +124,20 @@
                                 <span>Équivalent:</span>
                                 <span id="totalSecondary">0 $</span>
                             </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <label class="text-sm">Argent reçu:</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="amountReceived" value="0" min="0" class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                                    <span>FC</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm">Argent rendu:</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="amountReturned" value="0" min="0" class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right">
+                                    <span>FC</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -169,6 +183,8 @@
                 document.getElementById('paymentMethod').textContent = getPaymentMethodLabel(saleData.sale.payment_method);
                 document.getElementById('discount').value = saleData.sale.discount;
                 document.getElementById('notes').value = saleData.sale.notes || '';
+                document.getElementById('amountReceived').value = saleData.sale.amount_received || 0;
+                document.getElementById('amountReturned').value = saleData.sale.amount_returned || 0;
 
                 // Charger le nom du caissier
                 const usersResponse = await fetch('/api/users');
@@ -338,9 +354,13 @@
                 return;
             }
 
+
             const discount = parseFloat(document.getElementById('discount').value) || 0;
             const notes = document.getElementById('notes').value;
             const customerId = document.getElementById('customerId').value || null;
+            const amountReceived = parseFloat(document.getElementById('amountReceived').value) || 0;
+            const amountReturned = parseFloat(document.getElementById('amountReturned').value) || 0;
+
 
             const items = cart.map(item => ({
                 productId: item.productId,
@@ -348,6 +368,7 @@
                 quantity: item.quantity,
                 unitPrice: item.unitPrice
             }));
+
 
             try {
                 const response = await fetch(`/api/sales/${saleId}`, {
@@ -359,7 +380,9 @@
                         items: items,
                         discount: discount,
                         notes: notes,
-                        customerId: customerId
+                        customerId: customerId,
+                        amountReceived: amountReceived,
+                        amountReturned: amountReturned
                     })
                 });
 

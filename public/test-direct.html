@@ -6,19 +6,21 @@
 </head>
 <body class="p-8">
     <h1 class="text-2xl font-bold mb-4">Test Direct - Chargement Produits</h1>
-    
-    <button onclick="testLogin()" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">
-        1. Test Login
-    </button>
-    
-    <button onclick="testProducts()" class="bg-green-500 text-white px-4 py-2 rounded mb-4 ml-2">
-        2. Test Produits
-    </button>
-    
-    <button onclick="clearAll()" class="bg-red-500 text-white px-4 py-2 rounded mb-4 ml-2">
-        Effacer tout
-    </button>
-    
+
+    <form id="loginForm" class="mb-4 flex flex-col md:flex-row gap-2 md:items-end">
+        <div>
+            <label for="loginUsername" class="block text-sm font-medium">Utilisateur</label>
+            <input id="loginUsername" type="text" class="border px-2 py-1 rounded w-40" placeholder="Nom d'utilisateur" required />
+        </div>
+        <div>
+            <label for="loginPassword" class="block text-sm font-medium">Mot de passe</label>
+            <input id="loginPassword" type="password" class="border px-2 py-1 rounded w-40" placeholder="Mot de passe" required />
+        </div>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">1. Test Login</button>
+        <button type="button" onclick="testProducts()" class="bg-green-500 text-white px-4 py-2 rounded ml-2">2. Test Produits</button>
+        <button type="button" onclick="clearAll()" class="bg-red-500 text-white px-4 py-2 rounded ml-2">Effacer tout</button>
+    </form>
+
     <div id="result" class="bg-gray-100 p-4 rounded"></div>
     
     <script>
@@ -31,10 +33,9 @@
             document.getElementById('result').innerHTML = '<p class="text-green-600">✅ LocalStorage effacé</p>';
         }
         
-        async function testLogin() {
+        async function testLogin(username, password) {
             document.getElementById('result').innerHTML = '';
             log('🔄 Test de connexion...');
-            
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
@@ -42,15 +43,13 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username: 'admin',
-                        password: 'admin123'
+                        username: username,
+                        password: password
                     })
                 });
-                
                 const data = await response.json();
                 log(`Status: ${response.status}`);
                 log(`Réponse: ${JSON.stringify(data, null, 2)}`);
-                
                 if (data.sessionId) {
                     localStorage.setItem('sessionId', data.sessionId);
                     localStorage.setItem('user', JSON.stringify(data.user));
@@ -62,6 +61,14 @@
                 log('❌ Erreur: ' + error.message);
             }
         }
+
+        // Gestion du formulaire de login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            testLogin(username, password);
+        });
         
         async function testProducts() {
             document.getElementById('result').innerHTML = '';

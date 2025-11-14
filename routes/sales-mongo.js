@@ -8,7 +8,7 @@ const PDFDocument = require('pdfkit');
 // Créer une vente
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { items, paymentMethod, discount = 0, notes = '', customerId = null, customerName = 'Client anonyme' } = req.body;
+    const { items, paymentMethod, discount = 0, notes = '', customerId = null, customerName = 'Client anonyme', amountReceived = 0, amountReturned = 0 } = req.body;
     const userId = req.user.id;
 
     if (!items || items.length === 0) {
@@ -41,6 +41,8 @@ router.post('/', requireAuth, async (req, res) => {
       userId,
       customerId,
       customerName,
+      amountReceived,
+      amountReturned,
       items: saleItems
     });
 
@@ -144,6 +146,8 @@ router.get('/', async (req, res) => {
       user_id: sale.userId?._id,
       customer_id: sale.customerId?._id,
       customer_name: sale.customerName,
+      amount_received: sale.amountReceived,
+      amount_returned: sale.amountReturned,
       created_at: sale.createdAt
     }));
 
@@ -176,6 +180,8 @@ router.get('/:id', async (req, res) => {
       user_id: sale.userId?._id,
       customer_id: sale.customerId?._id,
       customer_name: sale.customerName,
+      amount_received: sale.amountReceived,
+      amount_returned: sale.amountReturned,
       created_at: sale.createdAt
     };
 
@@ -334,28 +340,32 @@ router.get('/:id/receipt', async (req, res) => {
     doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
     doc.moveDown();
 
-    // Totaux
-    doc.fontSize(11).font('Helvetica');
-    doc.text(`Sous-total:`, 350, doc.y, { continued: true })
+     // Totaux
+     doc.fontSize(11).font('Helvetica');
+     doc.text(`Sous-total:`, 350, doc.y, { continued: true })
        .text(`${sale.totalAmount.toFixed(0)} ${currencySymbol}`, { align: 'right' });
-    
-    if (sale.discount > 0) {
+     if (sale.discount > 0) {
       doc.fillColor('#DC2626').text(`Remise:`, 350, doc.y, { continued: true })
-         .text(`-${sale.discount.toFixed(0)} ${currencySymbol}`, { align: 'right' });
-    }
-
-    // TVA (si activée)
-    if (settings.receiptShowTax && sale.taxAmount && sale.taxAmount > 0) {
+        .text(`-${sale.discount.toFixed(0)} ${currencySymbol}`, { align: 'right' });
+     }
+     // TVA (si activée)
+     if (settings.receiptShowTax && sale.taxAmount && sale.taxAmount > 0) {
       doc.fillColor('#000000').text(`TVA:`, 350, doc.y, { continued: true })
-         .text(`${sale.taxAmount.toFixed(0)} ${currencySymbol}`, { align: 'right' });
-    }
-    
-    doc.moveDown(0.5);
-    doc.fontSize(14).font('Helvetica-Bold').fillColor('#16A34A');
-    doc.text(`TOTAL:`, 350, doc.y, { continued: true })
+        .text(`${sale.taxAmount.toFixed(0)} ${currencySymbol}`, { align: 'right' });
+     }
+     doc.moveDown(0.5);
+     doc.fontSize(14).font('Helvetica-Bold').fillColor('#16A34A');
+     doc.text(`TOTAL:`, 350, doc.y, { continued: true })
        .text(`${sale.finalAmount.toFixed(0)} ${currencySymbol}`, { align: 'right' });
+     doc.moveDown();
 
-    doc.moveDown();
+     // Argent reçu et rendu
+     doc.fontSize(11).font('Helvetica').fillColor('#000000');
+     doc.text(`Argent reçu:`, 350, doc.y, { continued: true })
+       .text(`${(typeof sale.amountReceived === 'number' ? sale.amountReceived : (typeof sale.amount_received === 'number' ? sale.amount_received : 0)).toFixed(0)} ${currencySymbol}`, { align: 'right' });
+     doc.text(`Argent rendu:`, 350, doc.y, { continued: true })
+       .text(`${(typeof sale.amountReturned === 'number' ? sale.amountReturned : (typeof sale.amount_returned === 'number' ? sale.amount_returned : 0)).toFixed(0)} ${currencySymbol}`, { align: 'right' });
+     doc.moveDown();
 
     // Mode de paiement (si activé)
     if (settings.receiptShowPaymentMethod !== false) {

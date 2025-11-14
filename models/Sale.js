@@ -42,6 +42,18 @@ const saleSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  amountReceived: {
+    type: Number,
+    required: false,
+    min: 0,
+    default: 0
+  },
+  amountReturned: {
+    type: Number,
+    required: false,
+    min: 0,
+    default: 0
+  },
   paymentMethod: {
     type: String,
     required: true,
