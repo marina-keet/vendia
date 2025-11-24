@@ -1,6 +1,6 @@
-# 🚀 GUIDE DE DÉPLOIEMENT - Vendia POS
+# 🚀 GUIDE DE DÉPLOIEMENT - Vendia POS (MySQL)
 
-Ce guide vous accompagne étape par étape pour déployer Vendia POS en production.
+Ce guide vous accompagne étape par étape pour déployer Vendia POS avec MySQL en production.
 
 ---
 
@@ -15,7 +15,7 @@ Ce guide vous accompagne étape par étape pour déployer Vendia POS en producti
 ### Logiciels requis
 - **Node.js:** v14.0.0 ou supérieur
 - **npm:** v6.0.0 ou supérieur
-- **MongoDB:** v4.4 ou supérieur
+- **MySQL:** v5.7 ou supérieur
 - **PM2:** Gestionnaire de processus (optionnel mais recommandé)
 - **Nginx:** Reverse proxy (pour production)
 
@@ -46,7 +46,10 @@ Modifiez les valeurs suivantes :
 ```bash
 NODE_ENV=production
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/vendia
+MYSQL_HOST=localhost
+MYSQL_USER=vendia_user
+MYSQL_PASSWORD=mot_de_passe_securise
+MYSQL_DATABASE=vendia
 SESSION_SECRET=votre_secret_super_securise_ici_minimum_32_caracteres
 JWT_SECRET=votre_jwt_secret_super_securise_ici_minimum_32_caracteres
 ALLOWED_ORIGINS=https://votre-domaine.com
@@ -59,55 +62,40 @@ mkdir -p logs receipts
 
 ---
 
-## 🗄️ CONFIGURATION MONGODB
+## 🗄️ CONFIGURATION MYSQL
 
-### Installation MongoDB (Ubuntu/Debian)
+### Installation MySQL (Ubuntu/Debian)
 ```bash
-# Importer la clé GPG
-wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
-
-# Ajouter le repository
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-
-# Installer MongoDB
 sudo apt update
-sudo apt install -y mongodb-org
-
-# Démarrer MongoDB
-sudo systemctl start mongod
-sudo systemctl enable mongod
-
-# Vérifier le status
-sudo systemctl status mongod
+sudo apt install mysql-server
+sudo systemctl start mysql
+sudo systemctl enable mysql
+sudo systemctl status mysql
 ```
 
-### Sécuriser MongoDB (IMPORTANT !)
+### Sécuriser MySQL
 ```bash
-# Connexion au shell MongoDB
-mongosh
-
-# Créer un utilisateur admin
-use admin
-db.createUser({
-  user: "admin",
-  pwd: "mot_de_passe_securise",
-  roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
-})
-
-# Créer un utilisateur pour l'application
-use vendia
-db.createUser({
-  user: "vendia_user",
-  pwd: "mot_de_passe_securise",
-  roles: [ { role: "readWrite", db: "vendia" } ]
-})
-
-exit
+sudo mysql_secure_installation
 ```
 
-Puis modifier `.env` :
+### Créer la base et l’utilisateur
 ```bash
-MONGODB_URI=mongodb://vendia_user:mot_de_passe_securise@localhost:27017/vendia?authSource=vendia
+sudo mysql -u root -p
+CREATE DATABASE vendia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'vendia_user'@'localhost' IDENTIFIED BY 'mot_de_passe_securise';
+GRANT ALL PRIVILEGES ON vendia.* TO 'vendia_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+### Importer le schéma SQL
+```bash
+mysql -u vendia_user -p vendia < database/schema-mysql.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-products.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-customers.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-users.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-settings.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-reports.sql
 ```
 
 ---
@@ -123,7 +111,7 @@ Ce script va :
 - ✅ Vérifier les dépendances
 - ✅ Créer le fichier .env si nécessaire
 - ✅ Installer les modules npm
-- ✅ Démarrer MongoDB
+- ✅ Démarrer MySQL
 - ✅ Démarrer l'application avec PM2
 - ✅ Configurer le démarrage automatique
 
@@ -272,10 +260,10 @@ sudo systemctl restart vendia  # Redémarrer
 sudo systemctl stop vendia     # Arrêter
 ```
 
-#### MongoDB
+#### MySQL
 ```bash
-sudo systemctl status mongod   # Status MongoDB
-mongosh                        # Shell MongoDB
+sudo systemctl status mysql    # Status MySQL
+mysql -u root -p              # Shell MySQL
 ```
 
 ---
@@ -321,7 +309,7 @@ htop
 
 ```bash
 # 1. Sauvegarder la base de données
-mongodump --out ~/backup-$(date +%Y%m%d)
+mysqldump -u vendia_user -p vendia > ~/backup-vendia-$(date +%Y%m%d).sql
 
 # 2. Arrêter l'application
 pm2 stop vendia-pos
@@ -350,7 +338,7 @@ crontab -e
 Ajouter :
 ```bash
 # Backup quotidien à 2h du matin
-0 2 * * * /usr/bin/mongodump --out /home/backup/vendia-$(date +\%Y\%m\%d) --db vendia
+0 2 * * * mysqldump -u vendia_user -pmot_de_passe_securise vendia > /home/backup/vendia-$(date +\%Y\%m\%d).sql
 ```
 
 ---
@@ -365,20 +353,20 @@ pm2 logs vendia-pos --lines 50
 # Vérifier le port
 lsof -i:3000
 
-# Tester la connexion MongoDB
-mongosh --eval "db.version()"
+# Tester la connexion MySQL
+mysql -u vendia_user -p -e "SHOW DATABASES;"
 ```
 
-### MongoDB ne se connecte pas
+### MySQL ne se connecte pas
 ```bash
 # Vérifier le service
-sudo systemctl status mongod
+sudo systemctl status mysql
 
 # Redémarrer
-sudo systemctl restart mongod
+sudo systemctl restart mysql
 
 # Vérifier les logs
-sudo tail -f /var/log/mongodb/mongod.log
+sudo tail -f /var/log/mysql/error.log
 ```
 
 ### Nginx erreur 502
@@ -420,7 +408,7 @@ lsof -ti:3000 | xargs kill -9
 Avant de mettre en production :
 
 - [ ] Fichier `.env` configuré avec valeurs de production
-- [ ] MongoDB sécurisé avec authentification
+- [ ] MySQL sécurisé avec authentification
 - [ ] Firewall configuré (UFW)
 - [ ] Nginx installé et configuré
 - [ ] SSL/HTTPS activé (Let's Encrypt)
@@ -433,4 +421,4 @@ Avant de mettre en production :
 
 ---
 
-**🎉 Félicitations ! Votre application Vendia POS est maintenant déployée en production !**
+**🎉 Félicitations ! Votre application Vendia POS (MySQL) est maintenant déployée en production !**

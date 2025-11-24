@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS customers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(32),
+  email VARCHAR(255),
+  address VARCHAR(255),
+  total_purchases DECIMAL(12,2) DEFAULT 0,
+  visit_count INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

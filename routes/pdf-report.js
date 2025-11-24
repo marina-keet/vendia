@@ -1,43 +1,52 @@
 const express = require('express');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
-const Sale = require('../models/Sale');
-const Product = require('../models/Product');
-const Settings = require('../models/Settings');
+const Sale = require('../models/Sale.mysql');
+const Product = require('../models/Product.mysql');
+const Settings = require('../models/Settings.mysql');
 
 // Générer rapport PDF
 router.get('/generate-pdf', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     // Récupérer les paramètres
-    const settings = await Settings.findOne();
-    const managerName = settings?.managerName || 'Gérant';
-    const companyName = settings?.companyName || 'Ma Boutique';
-    const companyAddress = settings?.companyAddress || '';
-    const companyPhone = settings?.companyPhone || '';
-    const currencySymbol = settings?.primaryCurrency === 'USD' ? '$' : 'FC';
-    
+    const allSettings = await Settings.getAllSettings();
+    // On suppose que les settings sont sous forme de tableau clé/valeur
+    const settingsObj = {};
+    allSettings.forEach(s => { settingsObj[s.key_name] = s.value; });
+    const managerName = settingsObj.managerName || 'Gérant';
+    const companyName = settingsObj.companyName || 'Ma Boutique';
+    const companyAddress = settingsObj.companyAddress || '';
+    const companyPhone = settingsObj.companyPhone || '';
+    const currencySymbol = settingsObj.primaryCurrency === 'USD' ? '$' : 'FC';
+
     // Récupérer les données
-    let query = {};
+    let sales;
     if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) {
-        const endDateTime = new Date(endDate);
-        endDateTime.setHours(23, 59, 59, 999);
-        query.createdAt.$lte = endDateTime;
+      let sql = 'SELECT * FROM sales WHERE 1=1';
+      const params = [];
+      if (startDate) {
+        sql += ' AND created_at >= ?';
+        params.push(startDate);
       }
+      if (endDate) {
+        sql += ' AND created_at <= ?';
+        params.push(endDate + ' 23:59:59');
+      }
+      sql += ' ORDER BY created_at DESC';
+      const [rows] = await require('../config/mysql').query(sql, params);
+      sales = rows;
+    } else {
+      sales = await Sale.getSales();
     }
-    
-    const sales = await Sale.find(query);
-    const allProducts = await Product.find();
-    
+    const allProducts = await Product.getProducts();
+
     // Calculer statistiques
     const totalSales = sales.length;
-    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.finalAmount || 0), 0);
+    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.final_amount || 0), 0);
     const avgSale = totalSales > 0 ? totalRevenue / totalSales : 0;
-    
+
     // Calculer produits
     const productSales = {};
     

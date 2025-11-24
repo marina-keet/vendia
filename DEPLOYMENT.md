@@ -1,93 +1,75 @@
-# 🚀 Guide de Déploiement - Vendia POS
+# 🚀 Guide de Déploiement - Vendia POS (MySQL)
 
-## Configuration MongoDB pour le Déploiement
+## Configuration MySQL pour le Déploiement
 
-### 1️⃣ Créer une Base de Données MongoDB
-
-**Option A : MongoDB Atlas (Cloud - Recommandé)**
-1. Allez sur [https://www.mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
-2. Créez un compte gratuit (M0 Sandbox - 512 MB)
-3. Créez un nouveau cluster
-4. Configurez les accès :
-   - Ajoutez votre adresse IP ou `0.0.0.0/0` (pour tout autoriser)
-   - Créez un utilisateur avec mot de passe
-5. Copiez la chaîne de connexion :
-   ```
-   mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/vendia?retryWrites=true&w=majority
-   ```
-
-**Option B : MongoDB Local (Développement)**
+### 1️⃣ Installer et Configurer MySQL
 ```bash
-# Installer MongoDB sur votre serveur
-sudo apt-get install mongodb
-sudo systemctl start mongodb
-# URI: mongodb://localhost:27017/vendia
+sudo apt update
+sudo apt install mysql-server
+sudo systemctl start mysql
+sudo systemctl enable mysql
+sudo systemctl status mysql
 ```
 
-### 2️⃣ Configuration du Fichier `.env`
-
-Copiez `.env.example` vers `.env` et configurez :
-
+### 2️⃣ Sécuriser MySQL
 ```bash
-# Copier le fichier exemple
-cp .env.example .env
+sudo mysql_secure_installation
+```
 
-# Éditer avec vos valeurs
+### 3️⃣ Créer la base et l’utilisateur
+```bash
+sudo mysql -u root -p
+CREATE DATABASE vendia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'vendia_user'@'localhost' IDENTIFIED BY 'mot_de_passe_securise';
+GRANT ALL PRIVILEGES ON vendia.* TO 'vendia_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+### 4️⃣ Importer le schéma SQL
+```bash
+mysql -u vendia_user -p vendia < database/schema-mysql.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-products.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-customers.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-users.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-settings.sql
+mysql -u vendia_user -p vendia < database/schema-mysql-reports.sql
+```
+
+### 5️⃣ Configuration du Fichier `.env`
+```bash
+cp .env.example .env
 nano .env
 ```
 
 **Variables à configurer :**
-
 ```env
-# Environment
 NODE_ENV=production
-
-# Serveur
 PORT=3000
-
-# Base de données MongoDB
-# ⚠️ Remplacez par votre URI MongoDB Atlas ou local
-MONGODB_URI=mongodb+srv://votre_user:votre_password@cluster0.xxxxx.mongodb.net/vendia
-
-# Sécurité
-# ⚠️ Générez des secrets longs et aléatoires en production
+MYSQL_HOST=localhost
+MYSQL_USER=vendia_user
+MYSQL_PASSWORD=mot_de_passe_securise
+MYSQL_DATABASE=vendia
 SESSION_SECRET=votre_secret_session_tres_long_et_aleatoire_ici
 JWT_SECRET=votre_secret_jwt_tres_long_et_aleatoire_ici
-
-# CORS
 ALLOWED_ORIGINS=https://votre-domaine.com,https://www.votre-domaine.com
-
-# Taux de change
 EXCHANGE_RATE=2450
 ```
 
-### 3️⃣ Générer des Secrets Sécurisés
-
+### 6️⃣ Générer des Secrets Sécurisés
 ```bash
-# Générer un secret aléatoire (Linux/Mac)
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-
-# Ou avec OpenSSL
 openssl rand -base64 64
 ```
 
-### 4️⃣ Installation et Démarrage
-
+### 7️⃣ Installation et Démarrage
 ```bash
-# 1. Cloner le projet
 git clone https://github.com/marina-keet/vendia.git
 cd vendia
-
-# 2. Installer les dépendances
 npm install
-
-# 3. Configurer .env (voir étape 2)
 cp .env.example .env
 nano .env
-
-# 4. Démarrer l'application
 npm start
-
 # Ou avec PM2 (recommandé pour production)
 npm install -g pm2
 pm2 start server.js --name vendia
@@ -95,17 +77,10 @@ pm2 save
 pm2 startup
 ```
 
-### 5️⃣ Vérification
-
+### 8️⃣ Vérification
 ```bash
-# Tester la connexion
 curl http://localhost:3000
-
-# Vérifier les logs
 pm2 logs vendia
-
-# Ou avec npm start
-# Les logs afficheront : "✅ MongoDB connecté avec succès!"
 ```
 
 ---
@@ -116,20 +91,16 @@ pm2 logs vendia
 
 1. **NE JAMAIS committer `.env`** dans Git
    - Le fichier `.gitignore` l'exclut déjà
-   
 2. **Utiliser des secrets forts** :
    - Minimum 64 caractères aléatoires
    - Différents pour SESSION_SECRET et JWT_SECRET
-
 3. **Configurer CORS** :
    - Limiter aux domaines autorisés uniquement
    - Ne pas utiliser `*` en production
-
-4. **MongoDB Atlas** :
+4. **MySQL** :
    - Activer l'authentification
-   - Limiter les IPs autorisées
    - Utiliser des mots de passe complexes
-
+   - Limiter l'accès réseau si possible
 5. **Variables sensibles** :
    - Utiliser les variables d'environnement du serveur
    - Render.com : Settings → Environment
@@ -152,7 +123,10 @@ pm2 logs vendia
 ### Heroku
 ```bash
 heroku create vendia-pos
-heroku config:set MONGODB_URI="mongodb+srv://..."
+heroku config:set MYSQL_HOST="localhost"
+heroku config:set MYSQL_USER="vendia_user"
+heroku config:set MYSQL_PASSWORD="mot_de_passe_securise"
+heroku config:set MYSQL_DATABASE="vendia"
 heroku config:set SESSION_SECRET="votre_secret"
 heroku config:set JWT_SECRET="votre_jwt_secret"
 heroku config:set NODE_ENV="production"
@@ -163,9 +137,9 @@ git push heroku main
 ```bash
 # Installer Node.js
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudо apt-get install -y nodejs
 
-# Configurer le projet (voir étape 4)
+# Configurer le projet (voir étapes ci-dessus)
 
 # Utiliser PM2 pour la gestion des processus
 npm install -g pm2
@@ -186,7 +160,10 @@ sudo apt-get install nginx
 |----------|-------------|---------|-------------|
 | `NODE_ENV` | Environnement d'exécution | `production` | Oui |
 | `PORT` | Port du serveur | `3000` | Non (défaut: 3000) |
-| `MONGODB_URI` | URI de connexion MongoDB | `mongodb+srv://...` | Oui |
+| `MYSQL_HOST` | Hôte MySQL | `localhost` | Oui |
+| `MYSQL_USER` | Utilisateur MySQL | `vendia_user` | Oui |
+| `MYSQL_PASSWORD` | Mot de passe MySQL | `mot_de_passe_securise` | Oui |
+| `MYSQL_DATABASE` | Base de données MySQL | `vendia` | Oui |
 | `SESSION_SECRET` | Secret pour les sessions | `random_string_64_chars` | Oui |
 | `JWT_SECRET` | Secret pour JWT | `another_random_64_chars` | Oui |
 | `ALLOWED_ORIGINS` | Domaines CORS autorisés | `https://domain.com` | Non |
@@ -196,15 +173,16 @@ sudo apt-get install nginx
 
 ## 🆘 Dépannage
 
-### Erreur de Connexion MongoDB
+### Erreur de Connexion MySQL
 ```bash
-# Vérifier l'URI
-echo $MONGODB_URI
+# Vérifier les variables
+echo $MYSQL_HOST $MYSQL_USER $MYSQL_PASSWORD $MYSQL_DATABASE
 
 # Tester la connexion
-mongo "mongodb+srv://cluster.xxxxx.mongodb.net/test" --username votre_user
+mysql -u vendia_user -p -e "SHOW DATABASES;"
 
-# Logs MongoDB Atlas : onglet "Monitoring" dans Atlas
+# Logs MySQL
+sudo tail -f /var/log/mysql/error.log
 ```
 
 ### Variables d'Environnement Non Chargées
@@ -216,7 +194,7 @@ npm list dotenv
 ls -la .env
 
 # Tester le chargement
-node -e "require('dotenv').config(); console.log(process.env.MONGODB_URI)"
+node -e "require('dotenv').config(); console.log(process.env.MYSQL_HOST)"
 ```
 
 ### Port Déjà Utilisé
@@ -235,12 +213,12 @@ PORT=8080
 
 ## ✅ Checklist de Déploiement
 
-- [ ] MongoDB Atlas créé et configuré
+- [ ] MySQL installé, sécurisé et configuré
 - [ ] Fichier `.env` créé avec toutes les variables
 - [ ] Secrets générés (SESSION_SECRET, JWT_SECRET)
 - [ ] `.env` dans `.gitignore`
 - [ ] `npm install` exécuté
-- [ ] Connexion MongoDB testée
+- [ ] Connexion MySQL testée
 - [ ] Application démarrée avec succès
 - [ ] Logs vérifiés (pas d'erreurs)
 - [ ] Page de connexion accessible
@@ -248,12 +226,13 @@ PORT=8080
 
 ---
 
+
 ## 📞 Support
 
 En cas de problème :
 1. Vérifier les logs : `pm2 logs vendia` ou console
 2. Tester chaque variable d'environnement
-3. Vérifier la connexion MongoDB dans Atlas
+3. Vérifier la connexion MySQL
 4. S'assurer que toutes les dépendances sont installées
 
-**Bon déploiement ! 🚀**
+**Bon déploiement MySQL ! 🚀**

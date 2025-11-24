@@ -1,15 +1,11 @@
-
 const express = require('express');
+const app = express();
 const bodyParser = require('body-parser');
 const path = require('path');
-const connectDB = require('./config/database');
 // Charger les variables d'environnement
 require('dotenv').config();
 
 
-
-// Connexion à MongoDB
-connectDB();
 
 // Configuration
 app.set('view engine', 'ejs');
@@ -20,25 +16,23 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes API - MongoDB
-const productsRoutes = require('./routes/products-mongo');
-const salesRoutes = require('./routes/sales-mongo');
-const reportsRoutes = require('./routes/reports-mongo');
-const authRoutes = require('./routes/auth-mongo');
-const customersRoutes = require('./routes/customers-mongo');
-const usersRoutes = require('./routes/users-mongo');
-const settingsRoutes = require('./routes/settings-mongo');
+
+// Routes API - MySQL uniquement
+const productsMysqlRoutes = require('./routes/products-mysql');
+const salesMysqlRoutes = require('./routes/sales-mysql');
+const customersMysqlRoutes = require('./routes/customers-mysql');
+const usersMysqlRoutes = require('./routes/users-mysql');
+const settingsMysqlRoutes = require('./routes/settings-mysql');
+const reportsMysqlRoutes = require('./routes/reports-mysql');
 const pdfReportRoutes = require('./routes/pdf-report');
 
-app.use('/api/products', productsRoutes);
-app.use('/api/sales', salesRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/customers', customersRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/products', productsMysqlRoutes);
+app.use('/api/sales', salesMysqlRoutes);
+app.use('/api/reports', reportsMysqlRoutes);
+app.use('/api/customers', customersMysqlRoutes);
+app.use('/api/users', usersMysqlRoutes);
+app.use('/api/settings', settingsMysqlRoutes);
 app.use('/api/pdf-report', pdfReportRoutes);
-
 
 app.get('/', (req, res) => {
   res.render('index');
@@ -52,8 +46,14 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-app.get('/products', (req, res) => {
-  res.render('products');
+const Product = require('./models/Product.mysql');
+app.get('/products', async (req, res) => {
+  try {
+    const products = await Product.getProducts();
+    res.render('products', { products });
+  } catch (error) {
+    res.render('products', { products: [], error: error.message });
+  }
 });
 
 app.get('/pos', (req, res) => {
@@ -152,6 +152,7 @@ app.use((err, req, res, next) => {
 });
 
 // Démarrage du serveur
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
